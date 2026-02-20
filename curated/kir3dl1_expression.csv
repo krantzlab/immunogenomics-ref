@@ -1,0 +1,18 @@
+allele,expression_class,confidence_tier,source_doi,source_detail,evidence_note
+001,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,High cell-surface expression by flow cytometry; consistently high across studies
+002,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,High cell-surface expression by flow cytometry
+004,low,B,10.4049/jimmunol.1502469,Boudreau 2016 J Immunol Figure 3,ER-retained; detectable surface expression but functionally reduced; NOT null
+005,high,B,10.4049/jimmunol.1502469,Boudreau 2016 J Immunol Figure 3,ER-retained but high surface expression; reclassified from older low designation
+006,low,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Low-expression subfamily; limited direct data
+007,low,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Low-expression subfamily; limited direct data
+008,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,High cell-surface expression; highest MFI in binding assays
+009,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,High cell-surface expression by flow cytometry
+015,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,High cell-surface expression
+016,high,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Classified by subfamily similarity; limited direct data
+017,high,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Classified by subfamily similarity; limited direct data
+020,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,High cell-surface expression
+025,high,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Classified by subfamily similarity; limited direct data
+028,high,C,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol,Classified by subfamily similarity; limited direct data
+029,high,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,Characterized directly; high surface expression
+053,low,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,Low surface expression; characterized directly
+054,null,B,10.4049/jimmunol.180.10.6743,Thomas 2008 J Immunol Table II,No detectable surface expression

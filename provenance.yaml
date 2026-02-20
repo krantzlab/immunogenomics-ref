@@ -1,0 +1,389 @@
+# provenance.yaml -- Full provenance registry for reference_data module
+#
+# Every dataset has:
+#   - source_type: "database_derived" (managed track) or "literature_curated" (curated track)
+#   - requires_manual_update: whether human review is needed
+#   - update_trigger: what event should prompt a re-fetch or review
+#   - primary_sources: DOI-linked references with contribution descriptions
+#   - analytical_decisions: key classification choices with rationale and confidence
+
+# ============================================================
+# Track 1: Database-derived (managed scripts)
+# ============================================================
+
+bw4_bw6_classification:
+  description: "HLA-B Bw4/Bw6 KIR ligand classification"
+  source_type: database_derived
+  upstream_database: "IPD-IMGT/HLA via Allele Query API"
+  upstream_url: "https://www.ebi.ac.uk/cgi-bin/ipd/api/allele"
+  api_field: matching.kir_ligand
+  derivation_script: managed/fetch_kir_ligand.R
+  output_file: datasets/bw4_bw6_classification.csv
+  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date"
+  resolution: "2-field (collapsed from full-resolution API data)"
+  last_fetched: "2026-02-19"
+  ipd_version: "3.63.0"
+  n_alleles: 6350
+  requires_manual_update: false
+  update_trigger: "New IPD-IMGT/HLA quarterly release"
+  validation: "Cross-checked against HLAtools protein alignment positions 77-83 and 80"
+  notes: >
+    API returns 3-way Bw4 classification (Bw4 - 80I, Bw4 - 80T, Bw6).
+    11 API/sequence mismatches found and corrected (sequence-authoritative).
+    Does NOT cover HLA-A alleles; see bw4_80i_classification for combined.
+
+c1_c2_classification:
+  description: "HLA-C C1/C2 KIR ligand classification"
+  source_type: database_derived
+  upstream_database: "IPD-IMGT/HLA via Allele Query API"
+  upstream_url: "https://www.ebi.ac.uk/cgi-bin/ipd/api/allele"
+  api_field: matching.kir_ligand
+  derivation_script: managed/fetch_kir_ligand.R
+  output_file: datasets/c1_c2_classification.csv
+  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date"
+  resolution: "2-field"
+  last_fetched: "2026-02-19"
+  ipd_version: "3.63.0"
+  n_alleles: 4978
+  requires_manual_update: false
+  update_trigger: "New IPD-IMGT/HLA quarterly release"
+  validation: "Cross-checked against HLAtools protein alignment position 80 (N=C1, K=C2)"
+  notes: >
+    0 API/sequence mismatches for C1/C2 classification.
+
+b_leader_assignments:
+  description: "HLA-B -21 leader peptide M/T dimorphism"
+  source_type: database_derived
+  upstream_database: "IPD-IMGT/HLA via B Leader Matching API + HLAtools protein alignment"
+  upstream_url: "https://www.ebi.ac.uk/cgi-bin/ipd/api/allele"
+  api_field: matching.b_leader
+  derivation_script: managed/fetch_b_leader.R
+  output_file: datasets/b_leader_assignments.csv
+  columns: "allele, b_leader, source, ipd_version, fetch_date"
+  resolution: "2-field (allele-level, NOT family-level)"
+  last_fetched: "2026-02-19"
+  ipd_version: "3.63.0"
+  n_alleles: 4353
+  requires_manual_update: false
+  update_trigger: "New IPD-IMGT/HLA quarterly release"
+  validation: "HLAtools protein alignment position -21 cross-validated against API; 0 mismatches"
+  notes: >
+    Replaces the family-level hla_b_21MT_assignments.csv (Petersdorf 2022)
+    with allele-level assignments from IPD protein sequence data.
+    Key correction: 6 of 7 Petersdorf M-leader families are actually T-leader
+    per IPD sequence data (B*44, B*45, B*47, B*56, B*57, B*58). Only B*07 is M.
+  primary_sources:
+    - doi: "10.1182/blood-2019-03-900738"
+      authors: "Petersdorf et al."
+      year: 2020
+      contribution: "Original family-level -21M/T classification framework"
+  analytical_decisions:
+    - decision: "Use allele-level (not family-level) leader assignments"
+      rationale: "IPD protein sequence data is allele-level and authoritative; family-level assignments from Petersdorf have errors for 6/7 M-leader families"
+      confidence: A
+
+bw4_80i_classification:
+  description: "Combined Bw4 position-80 classification (HLA-B + HLA-A)"
+  source_type: database_derived
+  upstream_database: "IPD-IMGT/HLA via HLAtools protein alignment"
+  derivation_script: managed/derive_bw4_80i.R
+  output_file: datasets/bw4_80i_classification.csv
+  columns: "allele_2field, locus, kir_ligand, pos80, bw4_motif_77_83, source, ipd_version, fetch_date"
+  resolution: "2-field"
+  last_fetched: "2026-02-19"
+  ipd_version: "3.63.0"
+  n_alleles: 7953
+  n_hla_b: 6848
+  n_hla_a: 1105
+  requires_manual_update: false
+  update_trigger: "New IPD-IMGT/HLA quarterly release"
+  validation: "HLAtools protein alignment positions 77-83 for Bw4 motif, position 80 for 80I/80T"
+  notes: >
+    HLA-B and HLA-A alleles classified from protein sequence.
+    Position 83 R = Bw4, G = Bw6 (primary discriminant).
+    Position 80 I/T/other within Bw4 alleles.
+    4 alleles reclassified from previous hardcoded BW4_80I_ALLELES list:
+    B*27:05, B*44:02, B*44:03, B*47:01 are 80T (not 80I).
+  primary_sources:
+    - doi: "10.4049/jimmunol.180.10.6743"
+      authors: "Thomas et al."
+      year: 2008
+      contribution: "KIR3DL1 allele functional groups correlating with Bw4 binding"
+    - doi: "10.1126/science.ado8609"
+      authors: "Carrington et al."
+      year: 2024
+      contribution: "HLA-A functional divergence framework including Bw4 status"
+  analytical_decisions:
+    - decision: "A*25:01 included in output but noted as non-functional KIR3DL1 ligand"
+      rationale: "Foley 2008 showed A*25:01 (serological Bw4, pos80=I) does NOT inhibit KIR3DL1+ NK cells"
+      alternatives_considered: "Could exclude entirely; kept for completeness with note"
+      confidence: B
+    - decision: "B*27:05, B*44:02, B*44:03, B*47:01 reclassified from 80I to 80T"
+      rationale: "Protein alignment position 80 = T (threonine) for all four; previous hardcoded classification was incorrect"
+      confidence: A
+
+# ============================================================
+# Track 2: Literature-curated
+# ============================================================
+
+kir3dl1_expression:
+  description: "KIR3DL1 allele surface expression level classification"
+  source_type: literature_curated
+  curated_file: curated/kir3dl1_expression.csv
+  output_file: datasets/kir3dl1_expression.csv
+  columns: "allele, expression_class, confidence_tier, source_doi, source_detail, evidence_note"
+  n_alleles: 17
+  requires_manual_update: true
+  update_trigger: "New KIR3DL1 functional study with expression data"
+  last_literature_review: "2026-02-19"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.4049/jimmunol.180.10.6743"
+      authors: "Thomas et al."
+      year: 2008
+      journal: "J Immunol"
+      contribution: "Original expression level classification by flow cytometry (DX9/Z27 staining); 11 alleles grouped into 6 expression subsets"
+    - doi: "10.4049/jimmunol.1502469"
+      authors: "Boudreau et al."
+      year: 2016
+      journal: "J Immunol"
+      contribution: "Functional reclassification of *005 as high expression despite ER retention; KIR3DL1 density and binding calibration"
+  analytical_decisions:
+    - decision: "*005 classified as HIGH expression"
+      rationale: "Boudreau 2016 demonstrated high cell-surface expression by flow cytometry despite known ER retention"
+      alternatives_considered: "Some older references classify as low based on intracellular trafficking pattern"
+      confidence: B
+    - decision: "*004 classified as LOW (not NULL)"
+      rationale: "Thomas 2008 Table II shows detectable surface expression; ER-retained but NOT absent"
+      alternatives_considered: "Could classify as null given reduced trafficking"
+      confidence: B
+    - decision: "*054 classified as NULL"
+      rationale: "Thomas 2008: no detectable surface expression by flow cytometry"
+      confidence: B
+    - decision: "Subfamily alleles (*016, *017, *025, *028) classified by sequence similarity"
+      rationale: "Limited direct flow cytometry data; classified based on coding region similarity to characterized alleles"
+      confidence: C
+
+kir3dl1_hla_binding:
+  description: "KIR3DL1 allotype binding to HLA class I alleles (full MFI matrix)"
+  source_type: literature_curated
+  curated_file: curated/kir3dl1_hla_binding.csv
+  output_file: datasets/kir3dl1_hla_binding.csv
+  columns: "kir3dl1_allele, hla_allele, mfi_mean, confidence_tier, source_doi, source_detail"
+  n_measurements: 323
+  n_kir3dl1_allotypes: 9
+  n_hla_alleles: 58
+  kir3dl1_allotypes: "001, 002, 004, 005, 008, 009, 015, 020, 029"
+  requires_manual_update: true
+  update_trigger: "New KIR3DL1-HLA binding study or Maiers paper updated"
+  last_literature_review: "2026-02-20"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.1101/2024.05.03.592082"
+      authors: "Maiers et al."
+      year: 2024
+      journal: "bioRxiv (preprint); also published in J Biol Chem 2025"
+      contribution: "Bead-based MFI measurements for 9 KIR3DL1 tetramers against ~96 HLA class I alleles (LABScreen panel); mean of 3 replicate runs per allotype"
+  analytical_decisions:
+    - decision: "Full binding matrix stored (all KIR3DL1 × HLA pairs with detectable signal)"
+      rationale: "Previous version only stored A*32:01 binding; full matrix enables analysis of allele-specific binding patterns across all Bw4+ HLA-B, HLA-A, and HLA-C alleles"
+      confidence: A
+    - decision: "Raw MFI values stored without binding tier classification"
+      rationale: "Tier boundaries (strong/moderate/weak) are context-dependent; storing raw MFI allows downstream projects to apply their own cutoffs"
+      confidence: A
+    - decision: "No estimated values included (removed *006/*007/*053 estimates from previous version)"
+      rationale: "Dataset now contains only direct measurements from the Maiers bead assay; estimated values were A*32:01-specific and not generalizable"
+      confidence: A
+  notes: >
+    Data from Maiers 2024 Supplementary Table (mmc8.xlsx).
+    Each KIR3DL1 allotype has variable number of HLA alleles (27-58 per allotype).
+    KIR3DL1*005 tested against all 58 HLA alleles; others tested against subsets.
+    MFI values are mean of 3 replicate runs. Strongest binding: *008 vs B*57:01 (MFI=6121).
+    Replaces the previous kir3dl1_a3201_binding.csv (A*32:01-only, 12 rows with tier assignments).
+
+erap1_allotype_activity:
+  description: "ERAP1 allotype definitions and enzymatic trimming activity classification"
+  source_type: literature_curated
+  curated_file: curated/erap1_allotype_activity.csv
+  output_file: datasets/erap1_allotype_activity.csv
+  columns: "allotype, activity_class, rs26618_pos56, rs26653_pos127, rs2287987_pos276, rs30187_pos528, rs10050860_pos575, rs17482078_pos725, rs27044_pos730, confidence_tier, source_doi, source_detail, evidence_note"
+  n_allotypes: 10
+  requires_manual_update: true
+  update_trigger: "New ERAP1 functional study with allotype-level activity data"
+  last_literature_review: "2026-02-19"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.1016/j.jbc.2021.100443"
+      authors: "Hutchinson et al."
+      year: 2021
+      journal: "J Biol Chem"
+      contribution: "Allotype definitions (10 common allotypes from 7 SNPs) with Vmax/Km measurements across multiple substrates"
+    - doi: "10.3389/fimmu.2024.1415964"
+      authors: "Georgaki et al."
+      year: 2024
+      journal: "Front Immunol"
+      contribution: "Allotype 10 deep characterization; V349+Q725 as key determinants of unique enzymatic properties; protective for AS/Behcets"
+  analytical_decisions:
+    - decision: "Activity classified as high/moderate/low_to_moderate/low/very_low based on Vmax ratios"
+      rationale: "Hutchinson 2021 Table 1 provides substrate-specific Vmax values; we used consensus across substrates"
+      confidence: B
+      note: "Activity ranking is substrate-dependent; some allotypes swap order depending on peptide tested"
+    - decision: "Allotype 10 classified as very_low"
+      rationale: "Consistently lowest activity across all substrates (up to 60-fold lower than most active); confirmed by Georgaki 2024"
+      confidence: B
+    - decision: "Allotype 2 classified as high"
+      rationale: "Most common allotype globally (25.6%); K528 confers robust trimming activity"
+      confidence: B
+    - decision: "Only 10 of 16 Hutchinson allotypes included"
+      rationale: "6 rare allotypes (11-16) lack measured activity data; including only those with experimental characterization"
+      alternatives_considered: "Could extrapolate from SNP combinations; decided against due to substrate-dependent activity"
+      confidence: B
+  notes: >
+    16 allotypes defined by Hutchinson 2021; 10 have measured activity.
+    Allotype definitions (all 16) also in data/references/erap1_allotype_definitions.csv.
+    SNP haplotype columns define each allotype per Hutchinson 2021 Table 1.
+
+erap2_haplotype_expression:
+  description: "ERAP2 haplotype expression status (HapA/HapB/HapC)"
+  source_type: literature_curated
+  curated_file: curated/erap2_haplotype_expression.csv
+  output_file: datasets/erap2_haplotype_expression.csv
+  columns: "haplotype, tag_snp_rs2248374, expression_status, expression_level, functional_consequence, population_freq_approx, confidence_tier, source_doi, source_detail, evidence_note"
+  n_haplotypes: 3
+  requires_manual_update: true
+  update_trigger: "New ERAP2 expression or haplotype study"
+  last_literature_review: "2026-02-19"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.1371/journal.pgen.1001157"
+      authors: "Andres et al."
+      year: 2010
+      journal: "PLoS Genet"
+      contribution: "Original HapA/HapB/HapC classification; NMD mechanism for HapB; balancing selection evidence"
+    - doi: "10.1016/j.ajhg.2014.05.014"
+      authors: "Ye et al."
+      year: 2014
+      journal: "Am J Hum Genet"
+      contribution: "Population frequency validation; HapC characterization as expressing_reduced"
+  analytical_decisions:
+    - decision: "Haplotype-level format (not genotype-level AA/AG/GG)"
+      rationale: "Enables diplotype derivation from phased data; more flexible for compound heterozygote analysis"
+      alternatives_considered: "Genotype-level (v1.0-v1.2 format) was simpler but less flexible"
+      confidence: B
+    - decision: "HapB classified as non_expressing"
+      rationale: "Andres 2010: aberrant splicing at extended exon 10 leads to premature stop codon and NMD; no detectable 110kDa ERAP2 protein in GG homozygotes"
+      confidence: B
+    - decision: "HapC classified as expressing_reduced (not full expressing)"
+      rationale: "Ye 2014 showed reduced but detectable expression; Andres 2010 noted this as less common haplotype intermediate between HapA and HapB"
+      confidence: C
+    - decision: "Maintained by balancing selection"
+      rationale: "Andres 2010: HapA/HapB maintained at ~44%/56% frequency across diverse populations; strong signature of balancing selection at this locus"
+      confidence: B
+
+hla_functional_divergence:
+  description: "HLA pairwise functional divergence scores (HLA-A, HLA-B, HLA-C)"
+  source_type: literature_curated
+  curated_file: curated/hla_functional_divergence.csv
+  output_file: datasets/hla_functional_divergence.csv
+  columns: "allele_1, allele_2, locus, fd_score, confidence_tier, source_doi"
+  n_pairs: 3002
+  n_hla_a: 961
+  n_hla_b: 1600
+  n_hla_c: 441
+  n_unique_alleles: "A=31, B=40, C=21"
+  requires_manual_update: false
+  update_trigger: "Updated Carrington functional divergence data or new allele coverage"
+  last_literature_review: "2026-02-20"
+  primary_sources:
+    - doi: "10.1126/science.ado8609"
+      authors: "Carrington et al."
+      year: 2024
+      journal: "Science"
+      contribution: "Functional divergence framework for HLA allele pairs; pairwise FD scores from supplementary Table S6"
+  analytical_decisions:
+    - decision: "Full pairwise matrix stored (both directions + self-pairs)"
+      rationale: "Enables direct lookup by any allele pair ordering without needing to sort; self-pairs (FD=0) included for completeness"
+      confidence: A
+    - decision: "Allele names standardized from compact (A0101) to 2-field (A*01:01)"
+      rationale: "Consistency with all other datasets in the module; backward-compatible getter returns compact format"
+      confidence: A
+  notes: >
+    Converted from original xlsx (3 sheets: AAover, BBover, CCover) to single CSV.
+    Original data from Carrington 2024 Science supplementary materials.
+    FD scores range 0 (identical) to ~0.97 (maximally divergent).
+
+hla_a_estimated_expression:
+  description: "HLA-A lineage-level expression z-scores with tertile classification"
+  source_type: literature_curated
+  curated_file: curated/hla_a_estimated_expression.csv
+  output_file: datasets/hla_a_estimated_expression.csv
+  columns: "hla_a_lineage, expression_z_score, expression_class, confidence_tier, source_doi, source_detail, evidence_note"
+  n_lineages: 21
+  requires_manual_update: true
+  update_trigger: "Updated HLA expression reference or new methodology"
+  last_literature_review: "2026-02-20"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.1126/science.aam8825"
+      authors: "Ramsuran V, Naranbhai V, Horowitz A, Qi Y, Martin MP, Yuki Y, Gao X, Walker-Sperling V, Del Prete GQ, Schneider DK, Lifson JD, Fellay J, Deeks SG, Martin JN, Goedert JJ, Wolinsky SM, Michael NL, Kirk GD, Buchbinder S, Haas D, Ndung'u T, Goulder P, Parham P, Walker BD, Carlson JM, Carrington M"
+      year: 2018
+      journal: "Science"
+      volume: 359
+      issue: 6371
+      pages: "86-90"
+      contribution: "HLA-A expression model z-scores from Supplementary Table S1; expression estimates derived from 9,763 HIV-infected individuals across 21 cohorts"
+  analytical_decisions:
+    - decision: "Expression classified as high/medium/low by z-score tertiles"
+      rationale: "Cutoffs at z > 0.3 (high), z < -0.3 (low), else medium; chosen to create approximate tertiles for categorical analysis"
+      confidence: A
+    - decision: "Lineage-level resolution (A*01, A*02, etc.) rather than allele-level"
+      rationale: "Ramsuran 2018 Table S1 provides one expression estimate per HLA-A lineage; allele-level variation within lineage not captured"
+      confidence: A
+  notes: >
+    Expression z-scores from Ramsuran et al. 2018 Supplementary Table S1.
+    Model estimates reflect population-level HLA-A allele expression measured
+    across 21 HIV cohorts (n=9,763). Higher HLA-A expression was associated with
+    impaired HIV control via NKG2A-mediated NK cell inhibition. 21 lineages
+    covering common HLA-A allele families (A*01 through A*80).
+
+hla_c_expression:
+  description: "HLA-C allotype-level surface expression (MFI + z-scores)"
+  source_type: literature_curated
+  curated_file: curated/hla_c_expression.csv
+  output_file: datasets/hla_c_expression.csv
+  columns: "hla_c_allotype, expression_mfi, expression_z_score, expression_class, confidence_tier, source_doi, source_detail, evidence_note"
+  n_allotypes: 14
+  requires_manual_update: true
+  update_trigger: "New HLA-C expression study with allotype-level data"
+  last_literature_review: "2026-02-20"
+  reviewer: MK
+  primary_sources:
+    - doi: "10.1182/blood-2014-09-599969"
+      authors: "Petersdorf EW, Gooley TA, Malkki M, Bacigalupo AP, Cesbron A, Du Toit E, Ehninger G, Egeland T, Fischer GF, Gervais T, Haagenson MD, Horowitz MM, Hsu K, Jindra P, Madrigal A, Oudshoorn M, Ringden O, Schroeder ML, Spellman SR, Tiercy JM, Velardi A, Witt CS, O'Huigin C, Apps R, Carrington M"
+      year: 2014
+      journal: "Blood"
+      volume: 124
+      issue: 26
+      pages: "3996-4003"
+      contribution: "HLA-C allotype surface expression MFI values from Table 3; measured by flow cytometry across transplant donor/recipient pairs"
+    - doi: "10.1126/science.1232685"
+      authors: "Apps R, Qi Y, Carlson JM, Chen H, Gao X, Thomas R, Yuki Y, Del Prete GQ, Goulder P, Brumme ZL, Brumme CJ, John M, Mallal S, Nelson G, Bosch R, Heckerman D, Stein JL, Soderberg KA, Moody MA, Denny TN, Zeng X, Fang J, Moffett A, Lifson JD, Goedert JJ, Buchbinder S, Kirk GD, Fellay J, McLaren P, Deeks SG, Pereyra F, Walker B, Michael NL, Weintrob A, Wolinsky S, Liao W, Carrington M"
+      year: 2013
+      journal: "Science"
+      volume: 340
+      issue: 6128
+      pages: "87-91"
+      contribution: "Original characterization of HLA-C expression levels and their influence on HIV control; foundational methodology for allotype-level expression measurement"
+  analytical_decisions:
+    - decision: "Expression classified as high/medium/low by z-score tertiles"
+      rationale: "Z-scores computed from MFI values (mean=188.7, SD=55.2); cutoffs at z > 0.3 (high), z < -0.3 (low), else medium; consistent with HLA-A classification approach"
+      confidence: A
+    - decision: "Allotype-level resolution (C*01, C*02, etc.) rather than allele-level"
+      rationale: "Petersdorf 2014 Table 3 provides one MFI per allotype; within-allotype variation not captured"
+      confidence: A
+  notes: >
+    MFI values from Petersdorf et al. 2014 Table 3 (flow cytometry).
+    14 allotypes ranked from C*07 (MFI=111, lowest) to C*14 (MFI=294, highest).
+    Paper highlights C*07 and C*03 as low expression, C*01 and C*14 as high expression.
+    Higher HLA-C expression associated with increased GVHD risk in HCT.
+    Z-scores derived from MFI for classification consistency with HLA-A expression data.

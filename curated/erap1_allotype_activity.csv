@@ -1,0 +1,11 @@
+allotype,activity_class,rs3734016_pos56_ancG_derA,rs26653_pos127_ancC_derG,rs26618_pos276_ancA_derG,rs27895_pos346_ancG_derA,rs2287987_pos349_ancA_derG,rs30187_pos528_ancA_derG,rs10050860_pos575_ancG_derA,rs17482078_pos725_ancG_derA,rs27044_pos730_ancC_derG,freq_ALL,freq_EUR,freq_AFR,freq_EAS,freq_SAS,freq_AMR,confidence_tier,source_doi,evidence_note
+1,high,E,P,I,G,M,K,D,R,Q,6.1,14.0,0.5,0.0,7.6,12.1,B,10.1016/j.jbc.2021.100443,Ancestral allotype; K528+Q730 = high activity; protective SNPs absent
+2,high,E,R,I,G,M,K,D,R,Q,25.6,14.4,28.1,42.6,18.4,22.6,B,10.1016/j.jbc.2021.100443,Most common globally; highest kcat/KM for 9mer substrate; K528+Q730; AS risk allotype in East Asians
+3,high,E,R,I,G,M,K,D,R,E,8.5,6.6,11.4,2.7,14.5,5.8,B,10.1016/j.jbc.2021.100443,Most active for Leu-AMC; K528 but E730 modestly reduces 9mer affinity vs allotypes 1-2
+4,moderate,E,R,I,G,M,R,D,R,E,3.2,1.0,3.0,2.4,2.4,8.9,B,10.1016/j.jbc.2021.100443,R528 reduces activity ~2-fold vs K528; otherwise similar to allotype 3
+5,moderate,E,R,I,D,M,R,D,R,E,6.2,6.3,8.4,0.0,10.9,3.9,B,10.1016/j.jbc.2021.100443,D346 distinguishes from allotype 4; absent in East Asians; accumulated 11mer intermediate
+6,moderate,E,P,I,G,M,R,D,R,E,5.8,9.2,4.0,0.7,6.5,10.2,B,10.1016/j.jbc.2021.100443,R528+P127; moderate activity; high 15mer trimming rate
+7,moderate,K,P,I,G,M,R,D,R,E,7.2,4.1,2.9,17.1,5.0,8.5,B,10.1016/j.jbc.2021.100443,K56 unique to this allotype; high 10mer trimming; enriched in East Asians
+8,moderate,E,P,M,G,M,R,D,R,E,21.8,21.5,17.4,28.5,26.7,14.0,B,10.1016/j.jbc.2021.100443,M276 distinguishes from allotype 6; second most common globally; enriched with ERAP2 Hap A
+9,low,E,P,M,G,M,R,N,R,E,0.1,0.4,0.0,0.0,0.0,0.4,B,10.1016/j.jbc.2021.100443,N575 compounds R528 effect; very rare allotype (<0.5% globally)
+10,very_low,E,P,I,G,V,R,N,Q,E,9.6,22.4,3.5,5.8,6.5,12.4,B,10.1016/j.jbc.2021.100443,Up to 60-fold lower kcat/KM; V349+N575+Q725 synergy; AS/psoriasis protective; Behcet risk (recessive)

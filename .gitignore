@@ -1,0 +1,28 @@
+# R artifacts
+.Rhistory
+.Rdata
+.RData
+.Rproj.user/
+*.Rproj
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# R package build artifacts (if ever packaged)
+*.tar.gz
+*.Rcheck/
+
+# Claude Code
+.claude/
+
+# Temporary files
+tmp/
+temp/

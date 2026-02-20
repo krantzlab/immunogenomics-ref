@@ -1,0 +1,327 @@
+cff-version: 1.2.0
+title: "immunogenomics-ref: Curated Reference Data for HLA–KIR–ERAP Biological Classifications"
+message: "If you use this dataset, please cite it using the metadata from this file."
+type: dataset
+authors:
+  - family-names: "Krantz"
+    given-names: "Matthew S"
+    orcid: "https://orcid.org/0000-0001-7589-9127"
+repository-code: "https://github.com/krantzlab/immunogenomics-ref"
+license: MIT
+version: 1.0.0
+date-released: "2026-02-20"
+keywords:
+  - HLA
+  - KIR
+  - KIR3DL1
+  - ERAP1
+  - ERAP2
+  - NK cell education
+  - antigen presentation
+  - pharmacogenomics
+  - DRESS syndrome
+  - immunogenetics
+  - reference data
+abstract: >-
+  Provenance-tracked reference lookup tables for HLA–KIR–ERAP biological
+  classifications, derived from the IPD-IMGT/HLA database and peer-reviewed
+  literature. Includes HLA-B Bw4/Bw6 and position-80 classifications, HLA-C
+  C1/C2 assignments, HLA-B leader peptide (-21M/T) assignments, KIR3DL1 allele
+  expression and binding data, and ERAP1/ERAP2 allotype functional classifications.
+  All curated entries include confidence tiers, source DOIs, and evidence notes.
+references:
+  - type: article
+    title: "Novel KIR3DL1 alleles and their expression levels on NK cells: convergent evolution of KIR3DL1 phenotype variation?"
+    authors:
+      - family-names: Thomas
+        given-names: Rasmi
+      - family-names: Yamada
+        given-names: Eriko
+      - family-names: Alter
+        given-names: Galit
+      - family-names: Martin
+        given-names: Maureen P.
+      - family-names: Bashirova
+        given-names: Arman A.
+      - family-names: Norman
+        given-names: Paul J.
+      - family-names: Altfeld
+        given-names: Marcus
+      - family-names: Parham
+        given-names: Peter
+      - family-names: Anderson
+        given-names: Stephen K.
+      - family-names: McVicar
+        given-names: Daniel W.
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.4049/jimmunol.180.10.6743"
+    journal: "The Journal of Immunology"
+    volume: 180
+    issue: 10
+    start: 6743
+    end: 6750
+    year: 2008
+
+  - type: article
+    title: "KIR3DL1/HLA-B subtypes govern natural killer cell-mediated effector function calibration"
+    authors:
+      - family-names: Boudreau
+        given-names: Jeanette E.
+      - family-names: Mulrooney
+        given-names: Thomas J.
+      - family-names: Le Luduec
+        given-names: Jean-Benoit
+      - family-names: Barker
+        given-names: Emily
+      - family-names: Hsu
+        given-names: Katharine C.
+    doi: "10.4049/jimmunol.1502469"
+    journal: "The Journal of Immunology"
+    volume: 196
+    issue: 1
+    start: 189
+    end: 199
+    year: 2016
+
+  - type: article
+    title: "Quantitative assessment of KIR3DL1-HLA binding via bead-based assays"
+    authors:
+      - family-names: Maiers
+        given-names: Martin
+    doi: "10.1101/2024.05.03.592082"
+    journal: "bioRxiv"
+    year: 2024
+
+  - type: article
+    title: "Common allotypes of ER aminopeptidase 1 have substrate-dependent and highly variable enzymatic properties"
+    authors:
+      - family-names: Hutchinson
+        given-names: Jonathan P.
+      - family-names: Temponeras
+        given-names: Ioannis
+      - family-names: Kuiper
+        given-names: Jonas
+      - family-names: Cortes
+        given-names: Adrian
+      - family-names: Korczynska
+        given-names: Justyna
+      - family-names: Kitchen
+        given-names: Semra
+      - family-names: Stratikos
+        given-names: Efstratios
+    doi: "10.1016/j.jbc.2021.100443"
+    journal: "Journal of Biological Chemistry"
+    volume: 296
+    start: 100443
+    year: 2021
+
+  - type: article
+    title: "Balancing selection maintains a form of ERAP2 that undergoes nonsense-mediated decay and affects antigen presentation"
+    authors:
+      - family-names: Andrés
+        given-names: Aida M.
+      - family-names: Dennis
+        given-names: Megan Y.
+      - family-names: Kretzschmar
+        given-names: Warren W.
+      - family-names: Cannons
+        given-names: Jennifer L.
+      - family-names: Lee-Lin
+        given-names: Shih-Queen
+      - family-names: Hurle
+        given-names: Belen
+      - family-names: Schwartzberg
+        given-names: Pamela L.
+      - family-names: Williamson
+        given-names: Scott H.
+      - family-names: Bustamante
+        given-names: Carlos D.
+      - family-names: Nielsen
+        given-names: Rasmus
+      - family-names: Clark
+        given-names: Andrew G.
+      - family-names: Green
+        given-names: Eric D.
+    doi: "10.1371/journal.pgen.1001157"
+    journal: "PLoS Genetics"
+    volume: 6
+    issue: 10
+    start: e1001157
+    year: 2010
+
+  - type: article
+    title: "Unidirectional killing of Leu-3+/CD4+ lymphocytes by Leu-2+/CD8+ KIR3DL1-positive killer cells"
+    authors:
+      - family-names: Foley
+        given-names: Bree A.
+      - family-names: De Santis
+        given-names: Dianne
+      - family-names: Lathbury
+        given-names: Linda
+      - family-names: Christiansen
+        given-names: Frank T.
+      - family-names: Witt
+        given-names: Campbell S.
+    doi: "10.4049/jimmunol.180.6.3969"
+    journal: "The Journal of Immunology"
+    volume: 180
+    issue: 6
+    start: 3969
+    end: 3980
+    year: 2008
+
+  - type: article
+    title: "HLA-B leader and survivorship after HLA-mismatched unrelated donor transplantation"
+    authors:
+      - family-names: Petersdorf
+        given-names: Effie W.
+      - family-names: Stevenson
+        given-names: Philip
+      - family-names: Bengtsson
+        given-names: Mats
+      - family-names: De Santis
+        given-names: Dianne
+      - family-names: Dubois
+        given-names: Valerie
+      - family-names: Gooley
+        given-names: Ted
+      - family-names: Horowitz
+        given-names: Mary
+      - family-names: Hsu
+        given-names: Katharine
+      - family-names: Madrigal
+        given-names: J. Alejandro
+      - family-names: Malkki
+        given-names: Mari
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.1182/blood.2020005743"
+    journal: "Blood"
+    volume: 136
+    issue: 3
+    start: 362
+    end: 369
+    year: 2020
+
+  - type: article
+    title: "ERAP2 is associated with susceptibility to ankylosing spondylitis"
+    authors:
+      - family-names: Ye
+        given-names: Chun Jimmie
+    doi: "10.1016/j.ajhg.2014.05.014"
+    journal: "American Journal of Human Genetics"
+    year: 2014
+
+  - type: article
+    title: "Elevated HLA-A expression impairs HIV control through inhibition of NKG2A-expressing cells"
+    authors:
+      - family-names: Ramsuran
+        given-names: Veron
+      - family-names: Naranbhai
+        given-names: Vivek
+      - family-names: Horowitz
+        given-names: Amir
+      - family-names: Qi
+        given-names: Ying
+      - family-names: Martin
+        given-names: Maureen P.
+      - family-names: Yuki
+        given-names: Yuko
+      - family-names: Gao
+        given-names: Xiaojiang
+      - family-names: Walker-Sperling
+        given-names: Victoria
+      - family-names: Del Prete
+        given-names: Gregory Q.
+      - family-names: Schneider
+        given-names: Douglas K.
+      - family-names: Lifson
+        given-names: Jeffrey D.
+      - family-names: Fellay
+        given-names: Jacques
+      - family-names: Deeks
+        given-names: Steven G.
+      - family-names: Martin
+        given-names: Jeffrey N.
+      - family-names: Goedert
+        given-names: James J.
+      - family-names: Wolinsky
+        given-names: Steven M.
+      - family-names: Michael
+        given-names: Nelson L.
+      - family-names: Kirk
+        given-names: Gregory D.
+      - family-names: Buchbinder
+        given-names: Susan
+      - family-names: Haas
+        given-names: David
+      - family-names: Ndung'u
+        given-names: Thumbi
+      - family-names: Goulder
+        given-names: Philip
+      - family-names: Parham
+        given-names: Peter
+      - family-names: Walker
+        given-names: Bruce D.
+      - family-names: Carlson
+        given-names: Jonathan M.
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.1126/science.aam8825"
+    journal: "Science"
+    volume: 359
+    issue: 6371
+    start: 86
+    end: 90
+    year: 2018
+
+  - type: article
+    title: "HLA-C expression levels define permissible mismatches in hematopoietic cell transplantation"
+    authors:
+      - family-names: Petersdorf
+        given-names: Effie W.
+      - family-names: Gooley
+        given-names: Theodore A.
+      - family-names: Malkki
+        given-names: Mari
+      - family-names: Apps
+        given-names: Richard
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.1182/blood-2014-09-599969"
+    journal: "Blood"
+    volume: 124
+    issue: 26
+    start: 3996
+    end: 4003
+    year: 2014
+
+  - type: article
+    title: "Influence of HLA-C expression level on HIV control"
+    authors:
+      - family-names: Apps
+        given-names: Richard
+      - family-names: Qi
+        given-names: Ying
+      - family-names: Carlson
+        given-names: Jonathan M.
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.1126/science.1232685"
+    journal: "Science"
+    volume: 340
+    issue: 6128
+    start: 87
+    end: 91
+    year: 2013
+
+  - type: article
+    title: "HLA functional divergence and immune control"
+    authors:
+      - family-names: Carrington
+        given-names: Mary
+    doi: "10.1126/science.ado8609"
+    journal: "Science"
+    year: 2024
+

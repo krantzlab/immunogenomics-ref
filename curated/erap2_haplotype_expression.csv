@@ -1,0 +1,4 @@
+haplotype,tag_snp_rs2248374,expression_status,expression_level,functional_consequence,population_freq_approx,confidence_tier,source_doi,source_detail,evidence_note
+HapA,A,expressing,full,Full-length functional ERAP2 protein expressed,0.44,B,10.1371/journal.pgen.1001029,Andres 2010 PLoS Genet,AA homozygotes (~20%) have highest ERAP2 protein levels
+HapB,G,non_expressing,none,Aberrant splicing leads to NMD; no detectable ERAP2 protein,0.56,B,10.1371/journal.pgen.1001029,Andres 2010 PLoS Genet,GG homozygotes (~31%) have no 110kDa ERAP2 protein; maintained by balancing selection
+HapC,A,expressing_reduced,reduced,Functional ERAP2 but at reduced levels compared to HapA,rare,C,10.1371/journal.pgen.1001029;10.1016/j.ajhg.2014.05.014,Andres 2010 + Ye 2014 Am J Hum Genet,Less common haplotype; expression intermediate between HapA and HapB
