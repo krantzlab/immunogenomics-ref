@@ -19,6 +19,7 @@ Literature-sourced biological classifications maintained manually. Each file inc
 | `kir3dl1_hla_binding.csv` | 323 | KIR3DL1 allotype binding to HLA class I (full MFI matrix) | 10.1101/2024.05.03.592082 |
 | `erap1_allotype_activity.csv` | 10 | ERAP1 allotype trimming activity with SNP haplotypes | 10.1016/j.jbc.2021.100443 |
 | `erap2_haplotype_expression.csv` | 3 | ERAP2 haplotype expression (HapA/HapB/HapC) | 10.1371/journal.pgen.1001029 |
+| `erap_snp_crosswalk.csv` | 11 | ERAP rsID → GRCh38 VCF-allele → amino-acid crosswalk (per-gene strand) | Ensembl REST VEP (release 116) / dbSNP 156 |
 | `hla_functional_divergence.csv` | 3,002 | HLA-A/B/C pairwise functional divergence scores | 10.1126/science.ado8609 |
 | `hla_a_estimated_expression.csv` | 21 | HLA-A lineage expression z-scores (high/medium/low) | 10.1126/science.aam8825 |
 | `hla_c_expression.csv` | 14 | HLA-C allotype expression MFI (high/medium/low) | 10.1182/blood-2014-09-599969 |

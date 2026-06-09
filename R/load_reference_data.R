@@ -186,6 +186,35 @@ load_erap2_haplotypes <- function() {
   data
 }
 
+#' Load ERAP rsID -> GRCh38 VCF-allele -> amino-acid crosswalk
+#'
+#' Callset-agnostic (pure GRCh38) mapping that makes the ERAP1 allotype and
+#' ERAP2 haplotype tables executable against a GRCh38 VCF/PGEN. ERAP1 and ERAP2
+#' sit in opposite orientation at 5q15, so coding_strand is recorded per gene
+#' and ref_aa/alt_aa are strand-consistent (coding strand) while ref_allele/
+#' alt_allele are GRCh38 forward-strand (VCF) bases.
+#' @return tibble: gene, rsid, aa_position, aa_ancestral, aa_derived, grch38_chrom,
+#'   grch38_pos, ref_allele, alt_allele, ref_aa, alt_aa, coding_strand,
+#'   dbsnp_build, ensembl_release, confidence_tier, source, evidence_note
+load_erap_crosswalk <- function() {
+  data <- .load_csv("erap_snp_crosswalk.csv",
+                     c("gene", "rsid", "aa_position", "grch38_chrom", "grch38_pos",
+                       "ref_allele", "alt_allele", "coding_strand", "confidence_tier", "source"),
+                     "erap_crosswalk")
+  bad_gene <- setdiff(unique(data$gene), c("ERAP1", "ERAP2"))
+  if (length(bad_gene) > 0) {
+    stop(sprintf("[erap_crosswalk] Unexpected gene values: %s", paste(bad_gene, collapse = ", ")),
+         call. = FALSE)
+  }
+  bad_strand <- setdiff(unique(data$coding_strand), c("plus", "minus"))
+  if (length(bad_strand) > 0) {
+    stop(sprintf("[erap_crosswalk] coding_strand must be plus/minus, got: %s", paste(bad_strand, collapse = ", ")),
+         call. = FALSE)
+  }
+  stopifnot("grch38_pos must be numeric" = is.numeric(data$grch38_pos))
+  data
+}
+
 #' Load HLA-A lineage-level expression z-scores
 #' @return tibble: hla_a_lineage, expression_z_score, expression_class, confidence_tier, source_doi, source_detail, evidence_note
 load_hla_a_expression <- function() {
@@ -388,6 +417,17 @@ get_hla_c_expression_class <- function() {
   classes <- data$expression_class
   names(classes) <- data$hla_c_allotype
   classes
+}
+
+# --- ERAP crosswalk lookup ---
+
+#' Get ERAP SNP crosswalk as a GRCh38 VCF-coordinate lookup
+#' @return tibble: rsid, gene, grch38_chrom, grch38_pos, ref_allele, alt_allele,
+#'   aa_position, ref_aa, alt_aa, coding_strand
+get_erap_crosswalk_lookup <- function() {
+  load_erap_crosswalk() %>%
+    select(rsid, gene, grch38_chrom, grch38_pos, ref_allele, alt_allele,
+           aa_position, ref_aa, alt_aa, coding_strand)
 }
 
 # --- HLA functional divergence lookup ---

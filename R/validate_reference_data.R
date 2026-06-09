@@ -384,6 +384,96 @@ validate_hla_divergence <- function() {
   errors
 }
 
+validate_erap_crosswalk <- function() {
+  errors <- character()
+  cw <- tryCatch(load_erap_crosswalk(), error = function(e) {
+    errors <<- c(errors, conditionMessage(e))
+    tibble()
+  })
+  if (nrow(cw) == 0) return(errors)
+
+  activity <- tryCatch(load_erap1_allotypes(), error = function(e) {
+    errors <<- c(errors, paste("load_erap1_allotypes():", conditionMessage(e)))
+    tibble()
+  })
+  if (nrow(activity) == 0) return(errors)
+
+  # Parse the activity-table SNP columns (e.g. rs2287987_pos349_ancA_derG) into
+  # rsid -> (aa_position, ancestral residue, derived residue). The ancestral
+  # residue is the value carried by allotype 1 (the ancestral allotype); the
+  # derived residue is the other allele observed in that column.
+  snp_cols <- grep("^rs", names(activity), value = TRUE)
+  enc <- lapply(snp_cols, function(col) {
+    rsid <- sub("_.*$", "", col)
+    pos  <- as.integer(str_match(col, "_pos(\\d+)_")[, 2])
+    vals <- unique(activity[[col]])
+    anc  <- activity[[col]][activity$allotype == 1][1]
+    der  <- setdiff(vals, anc)
+    list(rsid = rsid, col = col, pos = pos, anc = anc, der = der)
+  })
+  names(enc) <- vapply(enc, function(e) e$rsid, character(1))
+
+  # (a) rsID set: every ERAP1 activity SNP + rs2248374 must be present; the only
+  #     extra row allowed is the optional rs2549782 (ERAP2 N392K candidate).
+  required <- c(names(enc), "rs2248374")
+  optional_allowed <- "rs2549782"
+  missing_rs <- setdiff(required, cw$rsid)
+  if (length(missing_rs) > 0) {
+    errors <- c(errors, sprintf("crosswalk missing required rsIDs: %s", paste(missing_rs, collapse = ", ")))
+  }
+  extra_rs <- setdiff(cw$rsid, c(required, optional_allowed))
+  if (length(extra_rs) > 0) {
+    errors <- c(errors, sprintf("crosswalk has unexpected rsIDs: %s", paste(extra_rs, collapse = ", ")))
+  }
+
+  # (b) Each ERAP1 SNP's aa_position / ancestral / derived must match the
+  #     activity-table encoding exactly (position and direction).
+  for (e in enc) {
+    row <- cw %>% filter(rsid == e$rsid)
+    if (nrow(row) == 0) next  # already reported by (a)
+    if (length(e$der) != 1) {
+      errors <- c(errors, sprintf("%s: activity column %s does not have exactly 2 residues", e$rsid, e$col))
+      next
+    }
+    if (is.na(row$aa_position) || row$aa_position != e$pos) {
+      errors <- c(errors, sprintf("%s: aa_position %s != activity-table %s", e$rsid, row$aa_position, e$pos))
+    }
+    if (row$aa_ancestral != e$anc || row$aa_derived != e$der) {
+      errors <- c(errors, sprintf("%s: crosswalk anc/der %s/%s != activity-table %s/%s",
+                                  e$rsid, row$aa_ancestral, row$aa_derived, e$anc, e$der))
+    }
+  }
+
+  # (c) ref_aa/alt_aa must be strand-consistent: the {ref_aa, alt_aa} pair must
+  #     equal the {ancestral, derived} pair, and coding_strand must match the
+  #     gene's orientation at 5q15 (ERAP1 minus, ERAP2 plus).
+  gene_strand <- c(ERAP1 = "minus", ERAP2 = "plus")
+  for (i in seq_len(nrow(cw))) {
+    row <- cw[i, ]
+    expect_strand <- gene_strand[[row$gene]]
+    if (!is.null(expect_strand) && row$coding_strand != expect_strand) {
+      errors <- c(errors, sprintf("%s (%s): coding_strand %s != expected %s",
+                                  row$rsid, row$gene, row$coding_strand, expect_strand))
+    }
+    # Coding rows only (splice/non-coding rows carry NA amino acids).
+    if (!is.na(row$ref_aa) && !is.na(row$alt_aa) &&
+        !is.na(row$aa_ancestral) && !is.na(row$aa_derived)) {
+      if (!setequal(c(row$ref_aa, row$alt_aa), c(row$aa_ancestral, row$aa_derived))) {
+        errors <- c(errors, sprintf("%s: {ref_aa,alt_aa}={%s,%s} inconsistent with {anc,der}={%s,%s}",
+                                    row$rsid, row$ref_aa, row$alt_aa, row$aa_ancestral, row$aa_derived))
+      }
+    }
+  }
+
+  # (d) No missing GRCh38 coordinates on any row.
+  if (any(is.na(cw$grch38_chrom)) || any(is.na(cw$grch38_pos))) {
+    bad <- cw$rsid[is.na(cw$grch38_chrom) | is.na(cw$grch38_pos)]
+    errors <- c(errors, sprintf("crosswalk rows missing GRCh38 coordinates: %s", paste(bad, collapse = ", ")))
+  }
+
+  errors
+}
+
 # --- Backward-compatible getter validation ---
 
 validate_getters <- function() {
@@ -521,6 +611,7 @@ validate_all <- function(verbose = TRUE) {
     kir3dl1_binding     = validate_kir3dl1_binding,
     erap1_activity      = validate_erap1_activity,
     erap2_expression    = validate_erap2_expression,
+    erap_crosswalk      = validate_erap_crosswalk,
     hla_a_expression    = validate_hla_a_expression,
     hla_c_expression    = validate_hla_c_expression,
     hla_divergence      = validate_hla_divergence,

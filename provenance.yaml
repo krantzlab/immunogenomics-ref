@@ -206,8 +206,9 @@ erap1_allotype_activity:
   source_type: literature_curated
   curated_file: curated/erap1_allotype_activity.csv
   output_file: datasets/erap1_allotype_activity.csv
-  columns: "allotype, activity_class, rs26618_pos56, rs26653_pos127, rs2287987_pos276, rs30187_pos528, rs10050860_pos575, rs17482078_pos725, rs27044_pos730, confidence_tier, source_doi, source_detail, evidence_note"
+  columns: "allotype, activity_class, rs3734016_pos56_ancG_derA, rs26653_pos127_ancC_derG, rs26618_pos276_ancA_derG, rs27895_pos346_ancG_derA, rs2287987_pos349_ancA_derG, rs30187_pos528_ancA_derG, rs10050860_pos575_ancG_derA, rs17482078_pos725_ancG_derA, rs27044_pos730_ancC_derG, freq_ALL, freq_EUR, freq_AFR, freq_EAS, freq_SAS, freq_AMR, confidence_tier, source_doi, evidence_note"
   n_allotypes: 10
+  n_snps: 9
   requires_manual_update: true
   update_trigger: "New ERAP1 functional study with allotype-level activity data"
   last_literature_review: "2026-02-19"
@@ -217,14 +218,14 @@ erap1_allotype_activity:
       authors: "Hutchinson et al."
       year: 2021
       journal: "J Biol Chem"
-      contribution: "Allotype definitions (10 common allotypes from 7 SNPs) with Vmax/Km measurements across multiple substrates"
+      contribution: "Allotype definitions (10 allotypes from 9 SNPs) with Vmax/Km measurements across multiple substrates"
     - doi: "10.3389/fimmu.2024.1415964"
       authors: "Georgaki et al."
       year: 2024
       journal: "Front Immunol"
       contribution: "Allotype 10 deep characterization; V349+Q725 as key determinants of unique enzymatic properties; protective for AS/Behcets"
   analytical_decisions:
-    - decision: "Activity classified as high/moderate/low_to_moderate/low/very_low based on Vmax ratios"
+    - decision: "Activity classified as high/moderate/low/very_low based on Vmax ratios"
       rationale: "Hutchinson 2021 Table 1 provides substrate-specific Vmax values; we used consensus across substrates"
       confidence: B
       note: "Activity ranking is substrate-dependent; some allotypes swap order depending on peptide tested"
@@ -239,9 +240,10 @@ erap1_allotype_activity:
       alternatives_considered: "Could extrapolate from SNP combinations; decided against due to substrate-dependent activity"
       confidence: B
   notes: >
-    16 allotypes defined by Hutchinson 2021; 10 have measured activity.
-    Allotype definitions (all 16) also in data/references/erap1_allotype_definitions.csv.
-    SNP haplotype columns define each allotype per Hutchinson 2021 Table 1.
+    16 allotypes defined by Hutchinson 2021; the 10 with measured activity are included here.
+    9 SNP haplotype columns (coding-strand residues) define each allotype per Hutchinson 2021 Table 1;
+    per-population allele frequencies are in the freq_* columns.
+    rsID -> GRCh38 VCF-allele -> amino-acid mapping for these 9 SNPs is in erap_snp_crosswalk.
 
 erap2_haplotype_expression:
   description: "ERAP2 haplotype expression status (HapA/HapB/HapC)"
@@ -279,6 +281,50 @@ erap2_haplotype_expression:
     - decision: "Maintained by balancing selection"
       rationale: "Andres 2010: HapA/HapB maintained at ~44%/56% frequency across diverse populations; strong signature of balancing selection at this locus"
       confidence: B
+
+erap_snp_crosswalk:
+  description: "ERAP rsID -> GRCh38 VCF-allele -> amino-acid crosswalk (callset-agnostic)"
+  source_type: literature_curated
+  curated_file: curated/erap_snp_crosswalk.csv
+  output_file: datasets/erap_snp_crosswalk.csv
+  columns: "gene, rsid, aa_position, aa_ancestral, aa_derived, grch38_chrom, grch38_pos, ref_allele, alt_allele, ref_aa, alt_aa, coding_strand, dbsnp_build, ensembl_release, confidence_tier, source, evidence_note"
+  n_snps: 11
+  n_erap1: 9
+  n_erap2: 2
+  resolution: "GRCh38 (pure reference coordinates; no callset-specific variant IDs)"
+  requires_manual_update: true
+  update_trigger: "New ERAP functional SNP added to an allotype/haplotype table, or genome build / dbSNP refresh"
+  last_literature_review: "2026-06-09"
+  reviewer: MK
+  primary_sources:
+    - resource: "Ensembl REST API (VEP, GRCh38)"
+      url: "https://rest.ensembl.org/vep/human/id"
+      ensembl_release: 116
+      contribution: "Authoritative GRCh38 position, forward-strand ref/alt alleles, coding-strand codon -> amino-acid resolution per rsID (ERAP1 canonical ENST00000296754; ERAP2 canonical ENST00000437043)"
+    - resource: "dbSNP"
+      build: 156
+      url: "https://www.ncbi.nlm.nih.gov/snp/"
+      contribution: "rsID definitions and allele strings (imported into Ensembl variation)"
+  analytical_decisions:
+    - decision: "ref_allele/alt_allele are GRCh38 forward-strand (VCF) bases; ref_aa/alt_aa are coding-strand residues"
+      rationale: "ERAP1 (ENSG00000164307) is minus-strand and ERAP2 (ENSG00000164308) is plus-strand at 5q15; recording coding_strand per gene lets a consumer translate VCF alleles correctly. For ERAP1 the VCF ref/alt are reverse-complement of the coding change"
+      confidence: A
+    - decision: "Each ERAP1 rsID verified against erap1_allotype_activity.csv (position + ancestral/derived residue)"
+      rationale: "Verification gate: all 9 ERAP1 SNPs (incl. the less-standardized rs3734016/56, rs26653/127, rs26618/276, rs27895/346) resolved cleanly and matched the activity-table encoding; no curated values were altered"
+      confidence: A
+    - decision: "GRCh38 reference allele may carry the derived (not ancestral) residue"
+      rationale: "rs26653 (P127R): the GRCh38 reference base encodes Arg (the derived residue) while the ancestral allotype carries Pro; ref_aa/alt_aa reflect the genome, aa_ancestral/aa_derived reflect the allotype table"
+      confidence: A
+    - decision: "rs2549782 (ERAP2 N392K) included as OPTIONAL, tier C"
+      rationale: "Candidate ERAP2 functional SNP not used by the current activity/haplotype tables; numbered 392 on canonical ENST00000437043 (ENST00000379904 numbers the same residue 347)"
+      confidence: C
+  notes: >
+    Makes the ERAP1 allotype and ERAP2 haplotype tables executable against a
+    GRCh38 VCF/PGEN. Covers the 9 ERAP1 activity SNPs, the ERAP2 HapA/HapB tag
+    SNP rs2248374 (splice-region; no codon change, aa fields NA), and the optional
+    ERAP2 rs2549782. Coordinates/alleles resolved from Ensembl REST VEP (release 116)
+    over dbSNP build 156; intentionally callset-agnostic (no AGD250K or other
+    callset variant IDs).
 
 hla_functional_divergence:
   description: "HLA pairwise functional divergence scores (HLA-A, HLA-B, HLA-C)"

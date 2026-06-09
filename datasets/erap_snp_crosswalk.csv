@@ -1,0 +1,12 @@
+gene,rsid,aa_position,aa_ancestral,aa_derived,grch38_chrom,grch38_pos,ref_allele,alt_allele,ref_aa,alt_aa,coding_strand,dbsnp_build,ensembl_release,confidence_tier,source,evidence_note
+ERAP1,rs3734016,56,E,K,5,96803761,C,T,E,K,minus,156,116,B,Ensembl REST VEP (ENST00000296754),"E56K; ERAP1 is minus-strand so VCF ref C(fwd)=Glu, alt T(fwd)=Lys; matches activity-table anc/der E/K at 56"
+ERAP1,rs26653,127,P,R,5,96803547,C,G,R,P,minus,156,116,B,Ensembl REST VEP (ENST00000296754),"P127R; GRCh38 ref C(fwd)=Arg (the derived residue), alt G(fwd)=Pro (the ancestral residue); activity-table anc/der P/R at 127"
+ERAP1,rs26618,276,I,M,5,96795133,T,C,I,M,minus,156,116,B,Ensembl REST VEP (ENST00000296754),"I276M; VCF ref T(fwd)=Ile, alt C(fwd)=Met; matches activity-table anc/der I/M at 276"
+ERAP1,rs27895,346,G,D,5,96793840,C,T,G,D,minus,156,116,B,Ensembl REST VEP (ENST00000296754),"G346D; VCF ref C(fwd)=Gly, alt T(fwd)=Asp; matches activity-table anc/der G/D at 346"
+ERAP1,rs2287987,349,M,V,5,96793832,T,C,M,V,minus,156,116,A,Ensembl REST VEP (ENST00000296754),"M349V; VCF ref T(fwd)=Met, alt C(fwd)=Val; matches activity-table anc/der M/V at 349"
+ERAP1,rs30187,528,K,R,5,96788627,T,C,K,R,minus,156,116,A,Ensembl REST VEP (ENST00000296754),"K528R; VCF ref T(fwd)=Lys, alt C(fwd)=Arg; matches activity-table anc/der K/R at 528"
+ERAP1,rs10050860,575,D,N,5,96786506,C,T,D,N,minus,156,116,A,Ensembl REST VEP (ENST00000296754),"D575N; VCF ref C(fwd)=Asp, alt T(fwd)=Asn; matches activity-table anc/der D/N at 575"
+ERAP1,rs17482078,725,R,Q,5,96783162,C,T,R,Q,minus,156,116,A,Ensembl REST VEP (ENST00000296754),"R725Q; VCF ref C(fwd)=Arg, alt T(fwd)=Gln; matches activity-table anc/der R/Q at 725"
+ERAP1,rs27044,730,Q,E,5,96783148,G,C,Q,E,minus,156,116,A,Ensembl REST VEP (ENST00000296754),"Q730E; VCF ref G(fwd)=Gln, alt C(fwd)=Glu; matches activity-table anc/der Q/E at 730 (alt A(fwd) is a separate stop_gained, not used)"
+ERAP2,rs2248374,NA,NA,NA,5,96900192,A,G,NA,NA,plus,156,116,A,Ensembl REST VEP (ENST00000437043),"ERAP2 HapA/HapB tag SNP; A=HapA(expressing), G=HapB(extended exon 10 splice -> NMD, non-expressing); splice-donor-region/intron variant, no codon change so aa fields NA"
+ERAP2,rs2549782,392,N,K,5,96895296,G,C,K,N,plus,156,116,C,Ensembl REST VEP (ENST00000437043 canonical),"OPTIONAL: N392K candidate ERAP2 functional SNP, not used by the activity/haplotype tables; ERAP2 is plus-strand so VCF ref G(fwd)=Lys, alt C(fwd)=Asn; numbered 392 on canonical ENST00000437043 (ENST00000379904 numbers the same residue 347)"
