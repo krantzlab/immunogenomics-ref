@@ -1,0 +1,73 @@
+name: validate
+
+# The reference data is consumed by downstream packages that pin this repo by
+# tag (e.g. bridgie vendors a snapshot into inst/extdata). A tag that fails
+# validate_all() is one those consumers cannot un-pin, so the checks run on
+# every push, every PR, and every tag.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate_all()
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      # Explicit install rather than setup-r-dependencies: this repo has no
+      # DESCRIPTION, and RSPM serves Linux binaries so the four packages
+      # install in well under a minute.
+      - name: Install R dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages(c("readr", "dplyr", "stringr", "here"))
+
+      # Same entry point as `pixi run validate`, so local and CI cannot drift.
+      # here::here() anchors on the .git directory created by checkout, so
+      # .refdata_root() resolves to the repository root.
+      - name: Run validate_all()
+        run: Rscript tools/validate.R
+
+  release-consistency:
+    name: release metadata matches tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # CITATION.cff drifted to 1.0.0 while the repo was tagged v1.1.0, which
+      # meant anyone citing the dataset cited the wrong version. This is the
+      # guard against that recurring.
+      - name: CITATION.cff version must match the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          cff="$(sed -n 's/^version:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}[[:space:]]*$/\1/p' CITATION.cff | head -1)"
+          echo "tag=${tag}  CITATION.cff=${cff}"
+          if [ "${tag}" != "${cff}" ]; then
+            echo "::error file=CITATION.cff::version is '${cff}' but the tag is '${tag}'"
+            exit 1
+          fi
+
+      - name: CHANGELOG.md must document the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          if ! grep -qE "^## v?${tag}([[:space:]]|\(|$)" CHANGELOG.md; then
+            echo "::error file=CHANGELOG.md::no '## v${tag}' section found"
+            exit 1
+          fi
