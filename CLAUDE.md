@@ -72,13 +72,27 @@ These are critical analytical choices documented in `provenance.yaml`. When edit
 
 ## Working with this repository
 
+### Environment
+`pixi.toml` provides the toolchain. `pixi run validate` is the gate; use
+`pixi run -e managed` for anything in `managed/`. Never run a fetch or
+`refresh` task casually — they rewrite `datasets/` in place.
+
 ### Validation
 After any data change, always run:
+```bash
+pixi run validate          # preferred: pinned interpreter, correct exit status
+```
+or, in an R session that already has the dependencies:
 ```r
 source("R/validate_reference_data.R")
 validate_all()
 ```
-All 12 checks must pass before committing.
+All 13 checks must pass before committing. Prefer the pixi task: `validate_all()`
+returns its result invisibly, so calling it from a shell always exits 0 —
+`tools/validate.R` is the wrapper that turns a failure into a non-zero status.
+CI runs that same script on every push, PR and tag
+(`.github/workflows/validate.yml`), so a failure blocks the merge rather than
+reaching a tag that downstream consumers pin.
 
 ### Adding new curated data
 1. Create CSV in `curated/` with required provenance columns

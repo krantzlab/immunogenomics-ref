@@ -8,8 +8,8 @@ authors:
     orcid: "https://orcid.org/0000-0001-7589-9127"
 repository-code: "https://github.com/krantzlab/immunogenomics-ref"
 license: MIT
-version: 1.0.0
-date-released: "2026-02-20"
+version: 1.1.0
+date-released: "2026-06-09"
 keywords:
   - HLA
   - KIR
@@ -27,7 +27,9 @@ abstract: >-
   classifications, derived from the IPD-IMGT/HLA database and peer-reviewed
   literature. Includes HLA-B Bw4/Bw6 and position-80 classifications, HLA-C
   C1/C2 assignments, HLA-B leader peptide (-21M/T) assignments, KIR3DL1 allele
-  expression and binding data, and ERAP1/ERAP2 allotype functional classifications.
+  expression and binding data, ERAP1/ERAP2 allotype functional classifications,
+  and an ERAP SNP crosswalk mapping rsIDs to GRCh38 coordinates, VCF ref/alt
+  alleles, and coding-strand amino acids.
   All curated entries include confidence tiers, source DOIs, and evidence notes.
 references:
   - type: article

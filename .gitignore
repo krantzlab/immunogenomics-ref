@@ -20,6 +20,15 @@ Thumbs.db
 *.tar.gz
 *.Rcheck/
 
+# pixi
+# pixi.lock is committed deliberately -- it is what pins the interpreter and
+# package versions, so `pixi run validate` means the same thing everywhere.
+.pixi/
+
+# Project-local R library for CRAN packages with no conda-forge build
+# (HLAtools). Rebuilt by `pixi run -e managed deps`.
+.Rlib/
+
 # Claude Code
 .claude/
 
