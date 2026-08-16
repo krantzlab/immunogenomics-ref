@@ -65,7 +65,7 @@ library(here)
 # ============================================================
 
 #' Load Bw4/Bw6 classification for HLA-B alleles
-#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date
+#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date
 load_bw4_classification <- function() {
   data <- .load_csv("bw4_bw6_classification.csv",
                      c("allele_2field", "kir_ligand"),
@@ -91,7 +91,7 @@ load_bw4_80i_classification <- function() {
 }
 
 #' Load C1/C2 classification for HLA-C alleles
-#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date
+#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date
 load_c1_c2_classification <- function() {
   data <- .load_csv("c1_c2_classification.csv",
                      c("allele_2field", "kir_ligand"),

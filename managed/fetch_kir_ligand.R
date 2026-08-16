@@ -175,6 +175,20 @@ if (!is.null(B_align)) {
 # 3. Write output
 # ============================================================
 fetch_date <- as.character(Sys.time())
+
+# ipd_version is resolved in section 2 from the HLAtools alignment and was
+# previously only printed to stdout. It belongs in the tables themselves:
+# downstream consumers pin a snapshot of these files and have to be able to
+# state which IPD release produced the classifications they used.
+#
+# Assigned before fetch_date so the column order matches the other managed
+# tables (... source, ipd_version, fetch_date). NULL would silently drop the
+# column rather than write an empty one, so an unresolved version is recorded
+# as NA -- absent, and visibly so.
+ipd_version_out <- if (is.null(ipd_version)) NA_character_ else ipd_version
+hla_b_api$ipd_version <- ipd_version_out
+hla_c_api$ipd_version <- ipd_version_out
+
 hla_b_api$fetch_date <- fetch_date
 hla_c_api$fetch_date <- fetch_date
 
