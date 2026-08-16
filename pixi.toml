@@ -1,0 +1,84 @@
+# Development environment only. Nothing here is part of the published data:
+# `datasets/` is plain CSV and must stay readable by any R, any Python, any
+# language, with no pixi present. What this file provides is a way to actually
+# *run* the loaders, the validators and the managed fetch scripts.
+#
+# The reason it exists: R/validate_reference_data.R needs readr, dplyr, stringr
+# and here, and managed/ additionally needs httr, jsonlite and HLAtools. Without
+# a declared environment those get installed ad hoc, `validate_all()` quietly
+# stops being runnable on a fresh machine, and the 13 checks the release
+# checklist depends on become an honour system. See CONTRIBUTING.md.
+#
+# r-base is held at 4.5.* to match the bridgie workspace, so the same
+# interpreter serves both repositories on this machine.
+
+[workspace]
+name = "immunogenomics-ref"
+description = "Dev toolchain for the immunogenomics-ref reference data"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+# Everything needed to load and validate the shipped datasets. This is the
+# default environment, and it is deliberately the *small* one -- validating the
+# data must not require the fetch toolchain.
+[feature.core.dependencies]
+r-base = "4.5.*"
+r-readr = "*"
+r-dplyr = "*"
+r-stringr = "*"
+r-here = "*"
+
+# Additional dependencies for the managed/ track, which queries the IPD-IMGT/HLA
+# Allele Query API and reads HLAtools protein alignments.
+[feature.managed.dependencies]
+r-httr = "*"
+r-jsonlite = "*"
+
+# HLAtools is on CRAN but has no conda-forge build, so it goes in a
+# project-local library instead -- the same arrangement bridgie uses for
+# haplo.stats. R_LIBS prepends, so the environment's own library is still
+# found. Run `pixi run -e managed deps` after bumping r-base, since the package
+# is built against the pinned R.
+[feature.managed.activation.env]
+R_LIBS = ".Rlib/managed"
+
+[environments]
+default = ["core"]
+managed = ["core", "managed"]
+
+[tasks]
+console = "R --no-save --no-restore"
+
+# The gate. Identical to what CI runs, because both call the same script --
+# see the header comment in tools/validate.R for why the wrapper is needed
+# rather than calling validate_all() directly.
+validate = "Rscript tools/validate.R"
+
+# --- managed/ track -------------------------------------------------------
+#
+# These need the managed environment: `pixi run -e managed refresh`.
+#
+# They REWRITE FILES IN datasets/ IN PLACE. That is the canonical data every
+# downstream consumer reads, so run them deliberately when IPD publishes a
+# quarterly release -- not as part of an edit loop -- and diff the result
+# before committing.
+
+# Installs the CRAN-only HLAtools into .Rlib, and is a no-op once it is there,
+# so the fetch tasks can depend on it without a network round trip every run.
+# That dependency is the point: without it the fetch scripts fail at
+# library(HLAtools) partway through, after the API calls have already run.
+deps = 'Rscript -e "lib <- Sys.getenv(\"R_LIBS\"); if (!nzchar(lib)) stop(\"no R_LIBS set -- run this in the managed environment: pixi run -e managed deps\"); dir.create(lib, recursive = TRUE, showWarnings = FALSE); if (!requireNamespace(\"HLAtools\", quietly = TRUE)) install.packages(\"HLAtools\", lib = lib, repos = \"https://cloud.r-project.org\") else message(\"HLAtools already present in \", lib)"'
+
+fetch-kir-ligand = { cmd = "Rscript managed/fetch_kir_ligand.R", depends-on = ["deps"] }
+fetch-b-leader   = { cmd = "Rscript managed/fetch_b_leader.R",   depends-on = ["deps"] }
+derive-bw4-80i   = { cmd = "Rscript managed/derive_bw4_80i.R",   depends-on = ["deps"] }
+
+# Full managed refresh, in the order managed/README.md specifies:
+# derive_bw4_80i.R is last because it reads what the first two produce.
+# Validation runs at the end, so a refresh that breaks a check says so.
+refresh = { depends-on = [
+  "fetch-kir-ligand",
+  "fetch-b-leader",
+  "derive-bw4-80i",
+  "validate",
+] }
