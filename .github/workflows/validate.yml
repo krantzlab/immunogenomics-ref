@@ -17,6 +17,51 @@ permissions:
   contents: read
 
 jobs:
+  # The .githooks/commit-msg hook catches attribution trailers locally, but it
+  # only runs in a clone that has opted in with `git config core.hooksPath
+  # .githooks`, and `git commit --no-verify` skips it. Neither applies here.
+  # This is the control; the hook is the fast feedback.
+  #
+  # Runs on pull_request only: it needs both sides of the comparison, and on a
+  # push to main the commits are already in.
+  attribution:
+    name: no AI attribution trailers
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan commit messages on this branch
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Same three patterns as .githooks/commit-msg. Keep them in step.
+          pattern='^[[:space:]]*(co-authored-by:[[:space:]]*.*(anthropic|claude|copilot|openai|cursor|codeium)|claude-session:|signed-off-by:[[:space:]]*.*(anthropic|claude))'
+          pattern2='generated with[[:space:]]*\[?(claude|anthropic)'
+          pattern3='(claude\.ai/code|claude\.com/claude-code)'
+
+          hits=0
+          for sha in $(git rev-list "${BASE}..${HEAD}"); do
+            msg="$(git log -1 --format='%B' "$sha")"
+            if printf '%s\n' "$msg" | grep -qiE "$pattern" \
+               || printf '%s\n' "$msg" | grep -qiE "$pattern2" \
+               || printf '%s\n' "$msg" | grep -qiE "$pattern3"; then
+              echo "::error::$(git log -1 --format='%h %s' "$sha") contains an AI attribution trailer"
+              hits=$((hits + 1))
+            fi
+          done
+
+          if [ "$hits" -gt 0 ]; then
+            echo "This repository does not attribute commits to AI assistants." >&2
+            echo "See the 'Git and attribution policy' section of CLAUDE.md." >&2
+            exit 1
+          fi
+          echo "No attribution trailers found."
+
   validate:
     name: validate_all()
     runs-on: ubuntu-latest
