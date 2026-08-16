@@ -72,6 +72,15 @@ Use conventional commits:
 - [ ] `CHANGELOG.md` updated
 - [ ] DOIs are valid and resolve correctly
 - [ ] No study-specific data included (this repo is study-agnostic)
+- [ ] No AI attribution trailers (`Co-authored-by`, `Claude-Session:`, "Generated with")
+
+## Attribution
+
+AI assistants are not attributed as commit co-authors. Git attribution implies
+accountability for the committed content, and an assistant cannot hold it;
+assistant contributions are acknowledged in `README.md` instead. Enable the
+enforcing hook once per clone with `git config core.hooksPath .githooks`. If it
+rejects a commit, remove the trailer rather than bypassing with `--no-verify`.
 
 ## Release checklist
 

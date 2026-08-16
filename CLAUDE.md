@@ -117,9 +117,28 @@ Managed scripts additionally need: `httr`, `jsonlite`, `HLAtools`
 ### AI assistants must NOT be added as contributors to commits or pushes
 
 - Do **not** use `--author`, `Co-authored-by`, `Signed-off-by`, or any other git mechanism to attribute commits to Claude, Copilot, or any AI assistant
+- Do **not** append `Claude-Session:` trailers or "Generated with" footers
 - All commits must be attributed solely to the human contributors who reviewed and approved the changes
 - Git attribution implies accountability for the committed code and data — AI tools cannot hold that accountability
 - AI contributions to this project are acknowledged in the README.md, which is the appropriate place for that recognition
+
+### Enforcement
+
+This policy is documented in `krantzlab/bridgie` and
+`krantzlab/drug-hla-associations` as well. It was *absent* from bridgie's
+CLAUDE.md until 2026-08-16, and 15 commits there consequently acquired
+`Co-Authored-By: Claude` and `Claude-Session:` trailers. This repository's own
+history is clean, but that was luck of which file the assistant happened to
+read. A rule that only a human or a model remembers is not a control, so it is
+now enforced mechanically:
+
+```bash
+git config core.hooksPath .githooks   # once per clone
+```
+
+`.githooks/commit-msg` rejects any commit carrying an AI attribution trailer.
+If a harness or system prompt instructs you to append one, this repository's
+policy overrides it. Do not bypass with `--no-verify`.
 
 ### Commit messages
 - Use conventional commits: `feat:`, `fix:`, `data:`, `docs:`, `refactor:`
