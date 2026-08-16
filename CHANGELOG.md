@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## v1.2.0 (2026-08-16)
+
+Additive release. No existing column, row or value changes, so a consumer pinned to v1.1.0 can move to v1.2.0 without altering how it reads these files.
 
 ### Managed data (database-derived)
 
@@ -10,12 +12,26 @@
 
   **Additive change.** No existing column, row or value is altered, so consumers reading these files by column name are unaffected.
 
+### Fixed
+
+- **`CITATION.cff` declared version 1.0.0 at the v1.1.0 tag**, so anyone citing the dataset from that file cited a version that did not describe what they had. The v1.1.0 tag necessarily keeps the stale file — moving a published tag would invalidate the provenance record of every consumer pinned to it — so the correction takes effect here. The abstract also now mentions the ERAP SNP crosswalk, which v1.1.0 introduced.
+- **Documented check count was stale.** `validate_all()` has registered 13 checks since `erap_crosswalk` was added in v1.1.0, but `CLAUDE.md`, `CONTRIBUTING.md` and the README's example output all still said 12. The README's curated dataset table and PASS listing were missing the crosswalk entirely.
+
 ### Infrastructure
 
+- **Continuous integration** — `.github/workflows/validate.yml` runs `validate_all()` on every push, pull request and tag. A second, tag-only job asserts that `CITATION.cff` and `CHANGELOG.md` agree with the tag being pushed. Before this, the validation documented as a pre-commit requirement was an honour system.
+- **`tools/validate.R`** — single entry point for validation, used by both CI and `pixi run validate`. It exists because `validate_all()` returns its result invisibly and never signals a condition, so calling it from a shell always exited 0 even when checks failed.
+- **`pixi.toml` / `pixi.lock`** — declared development environment. `default` carries what loading and validating require; `managed` adds the IPD fetch toolchain. `r-base` is pinned at 4.5.\*. HLAtools has no conda-forge build and installs into a project-local `.Rlib` via `pixi run -e managed deps`.
 - `managed/fetch_kir_ligand.R` — writes `ipd_version` into both outputs. The value was already resolved from the HLAtools alignment and printed to stdout, but was never carried into the tables. An unresolved version is now written as `NA` rather than silently dropping the column.
 - `R/validate_reference_data.R` — added `.check_ipd_version()`, applied to all four managed tables: the column must be present, non-blank on every row, and hold exactly one version per table. Check count is unchanged at 13; the assertion runs inside the existing per-table validators.
 - `R/load_reference_data.R` — `@return` documentation for `load_bw4_classification()` and `load_c1_c2_classification()` updated.
 - `provenance.yaml` — `columns` updated for both datasets.
+
+### Documentation
+
+- **Release checklist** in `CONTRIBUTING.md`, recording the constraint that makes tags immutable here: downstream packages pin them and vendor `datasets/`, so a published tag is part of their provenance record and can only be superseded, never moved. It also states which schema changes are breaking.
+- `build:` and `ci:` added to the commit type list, which had no category for tooling.
+- README documents the pixi workflow and carries a CI status badge.
 
 ## v1.1.0 (2026-06-09)
 
