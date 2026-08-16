@@ -327,3 +327,27 @@ references:
     journal: "Science"
     year: 2024
 
+  # The database every managed/ table is derived from. See DATA_TERMS.md.
+  - type: article
+    title: "IPD-IMGT/HLA Database"
+    authors:
+      - family-names: Robinson
+        given-names: James
+      - family-names: Barker
+        given-names: Dominic J.
+      - family-names: Georgiou
+        given-names: Xenia
+      - family-names: Cooper
+        given-names: Michael A.
+      - family-names: Flicek
+        given-names: Paul
+      - family-names: Marsh
+        given-names: Steven G. E.
+    doi: "10.1093/nar/gkz950"
+    journal: "Nucleic Acids Research"
+    volume: 48
+    issue: D1
+    start: D948
+    end: D955
+    year: 2020
+

@@ -1,6 +1,13 @@
 MIT License
 
-Copyright (c) 2026 [Your Name]
+Copyright (c) 2026 Matthew S Krantz
+
+This licence covers the original work in this repository: the code in R/,
+managed/, tools/ and .github/, and the selection, arrangement and provenance
+annotation of the data tables. It is not a grant over the underlying data.
+Managed tables are derived from IPD-IMGT/HLA; curated tables are extracted
+from published literature whose copyright is held by the publishers. See
+DATA_TERMS.md.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

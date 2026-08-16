@@ -29,6 +29,8 @@ Additive release. No existing column, row or value changes, so a consumer pinned
 
 ### Documentation
 
+- **Licence scoped to what this repository actually holds.** `LICENSE` declared MIT over the whole repository, which claimed more than the project can grant: the managed tables are derived from IPD-IMGT/HLA, and four curated tables are extracted from publications — 3,002 rows from a *Science* supplementary table among them — whose copyright is held by the publishers. MIT now covers the code and the compilation; new `DATA_TERMS.md` gives the per-file breakdown, the IPD citation and licence link, and guidance for anyone redistributing or vendoring a snapshot. No data changed and nothing became more restrictive; the previous statement was simply inaccurate.
+- **`LICENSE` copyright holder filled in.** It read `Copyright (c) 2026 [Your Name]` — the template placeholder had never been replaced, leaving the grantor of the licence unstated on a public repository.
 - **Release checklist** in `CONTRIBUTING.md`, recording the constraint that makes tags immutable here: downstream packages pin them and vendor `datasets/`, so a published tag is part of their provenance record and can only be superseded, never moved. It also states which schema changes are breaking.
 - `build:` and `ci:` added to the commit type list, which had no category for tooling.
 - README documents the pixi workflow and carries a CI status badge.

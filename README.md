@@ -172,7 +172,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on adding or updating refe
 
 ## License
 
-[MIT](LICENSE) — reference data derived from public databases and published literature.
+Code and the compilation of these tables: [MIT](LICENSE).
+
+The data itself carries the terms of its sources. Managed tables are derived
+from IPD-IMGT/HLA; curated tables are extracted from published literature,
+several from supplementary material under publisher copyright. Every curated
+row carries `source_doi` so any individual value is traceable.
+
+**See [DATA_TERMS.md](DATA_TERMS.md)** for the per-file breakdown. Short
+version: cite these files freely, cite the original publication when a specific
+value matters to your result, and check the source's terms before
+re-publishing a curated table as your own dataset.
 
 ## Acknowledgments
 
