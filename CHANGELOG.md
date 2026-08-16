@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### Managed data (database-derived)
+
+- **`ipd_version` added to `bw4_bw6_classification.csv` and `c1_c2_classification.csv`** — the two API-derived tables recorded only `source` and `fetch_date`, so neither could state which IPD-IMGT/HLA release produced its classifications. `b_leader_assignments.csv` and `bw4_80i_classification.csv` already carried the column; all four managed tables now agree on `IPD-IMGT/HLA 3.63.0`. Column order matches the existing convention (`... source, ipd_version, fetch_date`).
+
+  Backfilled from the recorded provenance rather than re-fetched: re-running the fetch would pull whatever IPD has released since February and change classifications, which is a separate change. Every pre-existing value is byte-identical — removing the new column reproduces the previous files exactly.
+
+  **Additive change.** No existing column, row or value is altered, so consumers reading these files by column name are unaffected.
+
+### Infrastructure
+
+- `managed/fetch_kir_ligand.R` — writes `ipd_version` into both outputs. The value was already resolved from the HLAtools alignment and printed to stdout, but was never carried into the tables. An unresolved version is now written as `NA` rather than silently dropping the column.
+- `R/validate_reference_data.R` — added `.check_ipd_version()`, applied to all four managed tables: the column must be present, non-blank on every row, and hold exactly one version per table. Check count is unchanged at 13; the assertion runs inside the existing per-table validators.
+- `R/load_reference_data.R` — `@return` documentation for `load_bw4_classification()` and `load_c1_c2_classification()` updated.
+- `provenance.yaml` — `columns` updated for both datasets.
+
 ## v1.1.0 (2026-06-09)
 
 ### Curated data (literature-derived)

@@ -19,7 +19,7 @@ bw4_bw6_classification:
   api_field: matching.kir_ligand
   derivation_script: managed/fetch_kir_ligand.R
   output_file: datasets/bw4_bw6_classification.csv
-  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date"
+  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date"
   resolution: "2-field (collapsed from full-resolution API data)"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"
@@ -40,7 +40,7 @@ c1_c2_classification:
   api_field: matching.kir_ligand
   derivation_script: managed/fetch_kir_ligand.R
   output_file: datasets/c1_c2_classification.csv
-  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, fetch_date"
+  columns: "allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date"
   resolution: "2-field"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"

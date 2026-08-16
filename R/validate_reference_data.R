@@ -24,6 +24,36 @@ library(stringr)
 }
 source(.validate_source_path)
 
+# --- Shared assertions ---
+
+#' Assert a managed table records the IPD-IMGT/HLA release it was derived from
+#'
+#' These classifications change when IPD releases, and downstream packages pin
+#' a snapshot of these files, so a table that cannot say which release produced
+#' it leaves every analysis using it unable to state its own provenance. The
+#' column was missing from the two API-derived tables until it was backfilled
+#' at 3.63.0; this is what keeps it from being dropped again.
+#'
+#' @param data A loaded managed table.
+#' @param context Table name, used in the error message.
+#' @return Character vector of error messages (empty = pass).
+.check_ipd_version <- function(data, context) {
+  if (!"ipd_version" %in% names(data)) {
+    return(sprintf("[%s] Missing ipd_version column; managed tables must record the IPD-IMGT/HLA release", context))
+  }
+  if (any(is.na(data$ipd_version) | !nzchar(data$ipd_version))) {
+    return(sprintf("[%s] ipd_version is blank or NA for %d row(s)", context,
+                   sum(is.na(data$ipd_version) | !nzchar(data$ipd_version))))
+  }
+  distinct_versions <- unique(data$ipd_version)
+  if (length(distinct_versions) > 1) {
+    return(sprintf("[%s] Table mixes %d IPD versions (%s); one table is one fetch",
+                   context, length(distinct_versions),
+                   paste(distinct_versions, collapse = ", ")))
+  }
+  character()
+}
+
 # --- Individual validators ---
 
 validate_bw4_bw6 <- function() {
@@ -51,6 +81,8 @@ validate_bw4_bw6 <- function() {
   if (length(b5701) > 0 && b5701 != "Bw4 - 80I") {
     errors <- c(errors, sprintf("B*57:01 should be Bw4-80I, got: %s", b5701))
   }
+
+  errors <- c(errors, .check_ipd_version(data, "bw4_bw6"))
 
   errors
 }
@@ -85,6 +117,8 @@ validate_bw4_80i <- function() {
     errors <- c(errors, sprintf("A*32:01 should be Bw4-80I, got: %s", a3201$kir_ligand))
   }
 
+  errors <- c(errors, .check_ipd_version(data, "bw4_80i"))
+
   errors
 }
 
@@ -107,6 +141,8 @@ validate_c1_c2 <- function() {
     errors <- c(errors, sprintf("C*07:02 should be C1, got: %s", c0702))
   }
 
+  errors <- c(errors, .check_ipd_version(data, "c1_c2"))
+
   errors
 }
 
@@ -128,6 +164,8 @@ validate_b_leader <- function() {
   if (length(b0702) > 0 && b0702 != "M") {
     errors <- c(errors, sprintf("B*07:02 should be M-leader, got: %s", b0702))
   }
+
+  errors <- c(errors, .check_ipd_version(data, "b_leader"))
 
   errors
 }
