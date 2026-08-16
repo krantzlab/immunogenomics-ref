@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased — v2.0.0 (breaking)
+
+### BREAKING: `bw4_80i_classification.csv`
+
+**Null alleles removed (448 rows: 383 HLA-B, 65 HLA-A).** A null allele is not expressed, presents no epitope, and therefore cannot be a KIR ligand — classifying one is a category error. It is also wrong for the downstream model: a subject carrying `B*15:01N` expresses only one HLA-B product, so their category dosages do not sum to 2, and a consumer that finds a classification for the null allele is handed a second epitope the subject does not have. The lookup now fails for those alleles, which is the correct outcome.
+
+**`unclassified` retired; replaced by `Non-canonical` plus `classification_status`.** The old label meant two opposite things: 91 rows had *no protein sequence at all* (missing data) and 56 had a *fully readable* sequence whose position 83 was neither R nor G (a determinate finding — the allele carries neither canonical epitope). All 91 no-sequence rows were null alleles, so removing nulls leaves a single meaning, recorded explicitly in `classification_status` (`classified` / `non_canonical_83`).
+
+**`Bw4 - 80D` and `Bw4 - 80E` are gone — they were artefacts.** Both existed only because null alleles were read: `B*35:542N` yields the motif `EPAEPAR` at positions 77–83, which ends in R and so passed the position-83 rule. Not a plausible MHC motif.
+
+**New `kir_ligand_code`.** `kir_ligand` keeps its display form (`Bw4 - 80I`); `kir_ligand_code` is the identifier (`Bw4_80I`, `Bw6`, `NonCanonical`) — no spaces or punctuation, so it is safe in a feature id, column name or model matrix. The loader rejects any code that is not `^[A-Za-z0-9_]+$`.
+
+**New `api_kir_ligand`.** Records the IPD Allele Query API's own call alongside the sequence-derived one. At 3.63.0 they disagree on 24 expressed alleles (API Bw4/Bw6 vs sequence Non-canonical). Which source is authoritative is an open scientific question, deliberately unresolved; recording both makes the disagreement countable instead of a silent editorial choice.
+
+Row count 7,953 → 7,505. Column order: `allele_2field, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date`.
+
+**Why this is breaking:** the value domain of `kir_ligand` changed and rows were removed. Consumers that hardcode the category list, or that look up null alleles, will behave differently. Existing filters on `"Bw4 - 80I"` / `"Bw4 - 80T"` / `"Bw6"` are unaffected, as are all `get_*()` extractors.
+
+**What it unblocks:** at two-field resolution `B*15:01` and `B*15:01N` previously collapsed to one key carrying two categories, which made this table unusable by packages that truncate to two fields — `bridgie` raised a hard error on it and could register only three of the four managed classifications. Verified: zero conflicting keys at either locus, for both `kir_ligand` and `kir_ligand_code`.
+
+### Infrastructure
+
+- `managed/derive_bw4_80i.R` — excludes null alleles at both loci, emits the new columns, and joins `bw4_bw6_classification.csv` for `api_kir_ligand`. A refresh reproduces the shipped schema.
+- `R/validate_reference_data.R` — `validate_bw4_80i()` now checks that no null allele reappears, that every row has a readable position 80, that the retired values (`unclassified`, `Bw4 - 80D`, `Bw4 - 80E`) stay retired, that `kir_ligand` and `kir_ligand_code` agree one-to-one, that `classification_status` matches `kir_ligand`, and that no two-field key maps to more than one category at either locus. All verified against injected failures.
+- `R/load_reference_data.R` — `load_bw4_80i_classification()` requires the new columns and validates their domains; documents the per-locus coverage semantics.
+- `provenance.yaml` — records the position-83 rule, the null-allele exclusion and its rationale, per-locus coverage, and the value domain of each classification column.
+
 ## v1.2.0 (2026-08-16)
 
 Additive release. No existing column, row or value changes, so a consumer pinned to v1.1.0 can move to v1.2.0 without altering how it reads these files.
