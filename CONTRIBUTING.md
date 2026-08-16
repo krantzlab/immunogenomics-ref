@@ -61,12 +61,33 @@ Use conventional commits:
 - `feat:` — new loader/validator functions
 - `fix:` — bug fixes
 - `docs:` — documentation changes
+- `build:` — development environment and tooling (`pixi.toml`, `tools/`)
+- `ci:` — GitHub Actions workflows
 
 ## Pull request checklist
 
-- [ ] `validate_all()` passes (12/12 checks)
+- [ ] `pixi run validate` passes (13/13 checks)
 - [ ] New curated data includes all provenance columns
 - [ ] `provenance.yaml` updated for any data changes
 - [ ] `CHANGELOG.md` updated
 - [ ] DOIs are valid and resolve correctly
 - [ ] No study-specific data included (this repo is study-agnostic)
+
+## Release checklist
+
+Downstream packages pin this repository by tag and vendor snapshots of
+`datasets/` (for example `bridgie` reads a pinned copy from its own
+`inst/extdata/`). A published tag is therefore part of their provenance record
+and must never be moved, retagged or deleted — only superseded by a new tag.
+
+- [ ] `pixi run validate` passes
+- [ ] `CHANGELOG.md` has a `## vX.Y.Z` section for the release
+- [ ] `CITATION.cff` `version` and `date-released` match the tag
+- [ ] Schema changes are reflected in the version bump: additive columns are a
+      minor release; changing a column's value domain or renaming/removing a
+      column is breaking and needs a major release plus a `CHANGELOG.md` note
+      naming the affected consumers
+- [ ] Tag is annotated (`git tag -a vX.Y.Z -m ...`) and pushed with
+      `git push origin vX.Y.Z`
+- [ ] The release notes quote the **commit** SHA, not the annotated tag object
+      SHA, so consumers record an unambiguous pin

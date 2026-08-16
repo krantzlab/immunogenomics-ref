@@ -1,5 +1,7 @@
 # immunogenomics-ref
 
+[![validate](https://github.com/krantzlab/immunogenomics-ref/actions/workflows/validate.yml/badge.svg)](https://github.com/krantzlab/immunogenomics-ref/actions/workflows/validate.yml)
+
 Curated, provenance-tracked reference data for HLA–KIR–ERAP biological classifications used in immunogenetics and pharmacogenomics research.
 
 ## What this provides
@@ -26,6 +28,7 @@ Standardized lookup tables for NK cell education and antigen presentation pathwa
 | HLA functional divergence (pairwise FD) | 3,002 | Carrington 2024 |
 | HLA-A estimated expression (z-scores) | 21 | Ramsuran 2018 |
 | HLA-C allotype expression (MFI) | 14 | Petersdorf 2014 |
+| ERAP SNP crosswalk (GRCh38 ↔ amino acid) | 11 | Ensembl REST VEP (r116) / dbSNP b156 |
 
 ## Quick start
 
@@ -73,6 +76,7 @@ validate_all()
 #   PASS: kir3dl1_binding
 #   PASS: erap1_activity
 #   PASS: erap2_expression
+#   PASS: erap_crosswalk
 #   PASS: hla_a_expression
 #   PASS: hla_c_expression
 #   PASS: hla_divergence
@@ -121,6 +125,32 @@ Rscript managed/derive_bw4_80i.R      # Combined Bw4-80I/80T (A+B)
 **Core** (for loading and validation): `readr`, `dplyr`, `stringr`, `here`
 
 **Managed scripts** (for fetching): additionally `httr`, `jsonlite`, `HLAtools`
+
+### Development environment (pixi)
+
+The consumer path needs none of this — `datasets/` is plain CSV, readable by
+any language. `pixi.toml` exists so the loaders, validators and fetch scripts
+can actually be *run*, with the interpreter and package versions pinned by
+`pixi.lock`.
+
+```bash
+pixi install          # default environment: R 4.5 + readr, dplyr, stringr, here
+pixi run validate     # all 13 checks; exits non-zero on failure
+pixi run console      # interactive R with the loaders available
+```
+
+The `managed` environment adds `httr`/`jsonlite` for the IPD fetch scripts.
+`HLAtools` is on CRAN but has no conda-forge build, so it installs into a
+project-local `.Rlib/`:
+
+```bash
+pixi run -e managed deps      # one-time: install HLAtools into .Rlib/
+pixi run -e managed refresh   # all three fetch scripts, then validate
+```
+
+`refresh` **rewrites files in `datasets/` in place** — that is the canonical
+data every downstream consumer reads. Run it when IPD publishes a quarterly
+release, and diff the result before committing.
 
 ## Key references
 
