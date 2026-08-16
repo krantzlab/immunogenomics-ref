@@ -117,6 +117,58 @@ validate_bw4_80i <- function() {
     errors <- c(errors, sprintf("A*32:01 should be Bw4-80I, got: %s", a3201$kir_ligand))
   }
 
+  # Null alleles must not reappear. They are the only source of unreadable
+  # sequence, and their presence is what let a frameshifted read ("EPAEPAR")
+  # be classified as Bw4-80E, and what made B*15:01 and B*15:01N collapse to
+  # two different categories at two-field resolution.
+  nulls <- data$allele_2field[str_detect(data$allele_2field, "N$")]
+  if (length(nulls) > 0) {
+    errors <- c(errors, sprintf("%d null allele(s) present; they are excluded by design (e.g. %s)",
+                                length(nulls), nulls[1]))
+  }
+
+  # Follows from the above: with nulls gone, every row has a readable position 80.
+  unreadable <- sum(data$pos80 == "." | is.na(data$pos80))
+  if (unreadable > 0) {
+    errors <- c(errors, sprintf("%d row(s) have no readable position 80", unreadable))
+  }
+
+  # The artefact categories that only existed because null alleles were read.
+  artefacts <- intersect(unique(data$kir_ligand), c("Bw4 - 80D", "Bw4 - 80E", "unclassified"))
+  if (length(artefacts) > 0) {
+    errors <- c(errors, sprintf("Retired kir_ligand value(s) present: %s",
+                                paste(artefacts, collapse = ", ")))
+  }
+
+  # kir_ligand and kir_ligand_code must agree: one display value, one identifier.
+  pairs <- data %>% distinct(kir_ligand, kir_ligand_code)
+  multi <- pairs %>% count(kir_ligand) %>% filter(n > 1)
+  if (nrow(multi) > 0) {
+    errors <- c(errors, sprintf("kir_ligand maps to more than one code: %s",
+                                paste(multi$kir_ligand, collapse = ", ")))
+  }
+
+  # non_canonical_83 is the only non-classified state, and it must be exactly
+  # the set of Non-canonical rows.
+  mismatch <- sum((data$classification_status == "non_canonical_83") !=
+                    (data$kir_ligand == "Non-canonical"))
+  if (mismatch > 0) {
+    errors <- c(errors, sprintf("%d row(s) where classification_status and kir_ligand disagree", mismatch))
+  }
+
+  # Two-field truncation must not produce a key with two categories -- the
+  # failure that blocked downstream consumers from using this table at all.
+  for (lc in c("A", "B")) {
+    sub <- data %>% filter(locus == lc)
+    key <- str_remove(str_remove(sub$allele_2field, "[NQLS]$"), paste0("^", lc, "\\*"))
+    conflicting <- unique(key[duplicated(
+      unique(data.frame(key = key, v = sub$kir_ligand_code))$key)])
+    if (length(conflicting) > 0) {
+      errors <- c(errors, sprintf("locus %s: %d two-field key(s) map to >1 category (e.g. %s)",
+                                  lc, length(conflicting), conflicting[1]))
+    }
+  }
+
   errors <- c(errors, .check_ipd_version(data, "bw4_80i"))
 
   errors

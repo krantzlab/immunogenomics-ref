@@ -88,22 +88,46 @@ bw4_80i_classification:
   upstream_database: "IPD-IMGT/HLA via HLAtools protein alignment"
   derivation_script: managed/derive_bw4_80i.R
   output_file: datasets/bw4_80i_classification.csv
-  columns: "allele_2field, locus, kir_ligand, pos80, bw4_motif_77_83, source, ipd_version, fetch_date"
+  columns: "allele_2field, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date"
   resolution: "2-field"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"
-  n_alleles: 7953
-  n_hla_b: 6848
-  n_hla_a: 1105
+  n_alleles: 7505
+  n_hla_b: 6465
+  n_hla_a: 1040
+  excludes_null_alleles: true
+  n_null_alleles_excluded: 448
+  coverage:
+    B: complete      # every expressed 2-field HLA-B allele; absence = snapshot predates it
+    A: partial       # Bw4 carriers only by construction; absence = not Bw4, and is informative
+  value_domain:
+    kir_ligand: "Bw4 - 80I, Bw4 - 80T, Bw4 - 80A, Bw4 - 80N, Bw4 - 80S, Bw4 - 80F, Bw4 - 80M, Bw6, Non-canonical"
+    kir_ligand_code: "Bw4_80I, Bw4_80T, Bw4_80A, Bw4_80N, Bw4_80S, Bw4_80F, Bw4_80M, Bw6, NonCanonical"
+    classification_status: "classified, non_canonical_83"
   requires_manual_update: false
   update_trigger: "New IPD-IMGT/HLA quarterly release"
   validation: "HLAtools protein alignment positions 77-83 for Bw4 motif, position 80 for 80I/80T"
   notes: >
     HLA-B and HLA-A alleles classified from protein sequence.
-    Position 83 R = Bw4, G = Bw6 (primary discriminant).
+    Position 83 R = Bw4, G = Bw6 (primary discriminant); any other residue
+    is Non-canonical -- the allele carries neither canonical epitope. R83 is
+    the residue KIR3DL1 binding requires, so this is a determinate finding
+    rather than missing data.
     Position 80 I/T/other within Bw4 alleles.
     4 alleles reclassified from previous hardcoded BW4_80I_ALLELES list:
     B*27:05, B*44:02, B*44:03, B*47:01 are 80T (not 80I).
+    Null alleles excluded from v2.0.0 (448 rows): not expressed, so they
+    present no epitope and cannot be KIR ligands. They were also the sole
+    source of unreadable sequence, and reading positions 77-83 out of a
+    frameshifted null produced the spurious Bw4-80D and Bw4-80E categories
+    (e.g. B*35:542N read as "EPAEPAR", which ends in R and passed the
+    position-83 rule). Their removal is what lets classification_status carry
+    exactly one non-classified value.
+    api_kir_ligand records the IPD Allele Query API's own call where one
+    exists. At 3.63.0 the two sources disagree on 24 expressed alleles, all
+    of them API Bw4/Bw6 versus sequence Non-canonical. Which source is
+    authoritative is an open scientific question and is deliberately not
+    resolved here; both are recorded so the disagreement is countable.
   primary_sources:
     - doi: "10.4049/jimmunol.180.10.6743"
       authors: "Thomas et al."

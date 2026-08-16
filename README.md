@@ -15,7 +15,13 @@ Standardized lookup tables for NK cell education and antigen presentation pathwa
 | HLA-B Bw4/Bw6 (80I/80T) | 6,350 | IPD-IMGT/HLA 3.63.0 + HLAtools | 2-field |
 | HLA-C C1/C2 | 4,978 | IPD-IMGT/HLA 3.63.0 + HLAtools | 2-field |
 | HLA-B leader (-21M/T) | 4,353 | HLAtools protein alignment | 2-field |
-| HLA-A + HLA-B Bw4/80I/80T | 7,953 | HLAtools protein alignment | 2-field |
+| HLA-A + HLA-B Bw4/80I/80T | 7,505 | HLAtools protein alignment | 2-field |
+
+Null alleles are excluded from the Bw4 position-80 table: they are not
+expressed, so they present no epitope and cannot be KIR ligands. HLA-B coverage
+is complete; HLA-A lists Bw4 carriers only, so an HLA-A allele's absence means
+"not Bw4" and is informative. See `provenance.yaml` for the per-locus coverage
+declaration.
 
 ### Literature-curated classifications
 

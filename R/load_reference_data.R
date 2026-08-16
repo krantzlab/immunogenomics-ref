@@ -81,12 +81,42 @@ load_bw4_classification <- function() {
 }
 
 #' Load Bw4 position-80 classification (HLA-B + HLA-A)
-#' @return tibble: allele_2field, locus, kir_ligand, pos80, bw4_motif_77_83, source, ipd_version, fetch_date
+#'
+#' Null alleles are excluded by design: they are not expressed, so they present
+#' no epitope and cannot be KIR ligands. As a consequence every row carries a
+#' readable position 83, and `classification_status` has exactly one non-
+#' classified value -- `non_canonical_83`, meaning the allele carries neither
+#' canonical epitope. There is no "sequence unavailable" state.
+#'
+#' Coverage differs by locus. HLA-B is complete: every expressed 2-field allele
+#' is present. HLA-A is partial by construction -- only Bw4 carriers are
+#' listed -- so an HLA-A allele's absence means "not Bw4" and is informative,
+#' while an HLA-B allele's absence means the snapshot predates it.
+#'
+#' @return tibble: allele_2field, locus, kir_ligand, kir_ligand_code,
+#'   classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source,
+#'   ipd_version, fetch_date
 load_bw4_80i_classification <- function() {
   data <- .load_csv("bw4_80i_classification.csv",
-                     c("allele_2field", "locus", "kir_ligand", "pos80"),
+                     c("allele_2field", "locus", "kir_ligand", "kir_ligand_code",
+                       "classification_status", "pos80"),
                      "bw4_80i_classification")
   stopifnot("locus must be A or B" = all(data$locus %in% c("A", "B")))
+
+  bad_status <- setdiff(unique(data$classification_status),
+                        c("classified", "non_canonical_83"))
+  if (length(bad_status) > 0) {
+    stop(sprintf("[bw4_80i_classification] Unexpected classification_status: %s",
+                 paste(bad_status, collapse = ", ")), call. = FALSE)
+  }
+
+  # The identifier column is what downstream code builds feature names from, so
+  # a space or punctuation slipping in is a downstream break, not a cosmetic one.
+  bad_code <- unique(data$kir_ligand_code[!str_detect(data$kir_ligand_code, "^[A-Za-z0-9_]+$")])
+  if (length(bad_code) > 0) {
+    stop(sprintf("[bw4_80i_classification] kir_ligand_code must be syntax-safe, got: %s",
+                 paste(bad_code, collapse = ", ")), call. = FALSE)
+  }
   data
 }
 
