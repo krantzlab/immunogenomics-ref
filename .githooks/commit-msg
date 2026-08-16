@@ -1,0 +1,55 @@
+#!/bin/sh
+# commit-msg -- reject AI attribution trailers.
+#
+# Policy (see the "Git and attribution policy" section of CLAUDE.md): git
+# attribution implies accountability for the committed code and data, and an AI
+# assistant cannot hold that. Contributions from assistants are acknowledged in
+# README.md, which is the appropriate place.
+#
+# This hook exists because documentation alone did not hold. This repository's
+# CLAUDE.md has carried the policy since the initial release and its own
+# history is clean -- but the identical policy was absent from
+# krantzlab/bridgie, where 15 commits acquired Co-Authored-By and
+# Claude-Session trailers. A rule that only a human or a model remembers is not
+# a control.
+#
+# Enable once per clone:
+#
+#   git config core.hooksPath .githooks
+#
+# To confirm it is active:  git config --get core.hooksPath
+
+msg_file="$1"
+
+# Three separate patterns, because they appear in different shapes.
+#   1. Trailers, which sit at the start of a line.
+#   2. "Generated with ..." footers, which do NOT -- the usual form is prefixed
+#      with an emoji, so anchoring this one at line start lets it through.
+#   3. Session URLs, which can appear anywhere in the body.
+if grep -qiE '^[[:space:]]*(co-authored-by:[[:space:]]*.*(anthropic|claude|copilot|openai|cursor|codeium)|claude-session:|signed-off-by:[[:space:]]*.*(anthropic|claude))' "$msg_file" \
+   || grep -qiE 'generated with[[:space:]]*\[?(claude|anthropic)' "$msg_file" \
+   || grep -qiE '(claude\.ai/code|claude\.com/claude-code)' "$msg_file"; then
+    cat >&2 <<'EOF'
+commit-msg: rejected -- AI attribution trailer found.
+
+This repository does not attribute commits to AI assistants. Remove any
+Co-Authored-By line naming an assistant, any Claude-Session line, and any
+"Generated with" footer, then commit again.
+
+See the "Git and attribution policy" section of CLAUDE.md.
+EOF
+    exit 1
+fi
+
+# datasets/ is derived -- from managed/ fetch scripts or by copying curated/.
+# Warn, do not block: a legitimate data commit is exactly what should touch it,
+# so this catches the hand-edit that skipped the pipeline.
+if git diff --cached --name-only 2>/dev/null | grep -q '^datasets/'; then
+    if ! grep -qiE '^data' "$msg_file"; then
+        echo "commit-msg: note -- datasets/ changed but the message is not a data: commit." >&2
+        echo "  datasets/ is derived from managed/ scripts or copied from curated/." >&2
+        echo "  Run validate_all() before committing." >&2
+    fi
+fi
+
+exit 0
