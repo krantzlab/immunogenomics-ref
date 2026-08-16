@@ -66,18 +66,18 @@ validate_bw4_bw6 <- function() {
 
   # Known alleles must be present
   must_have <- c("B*44:02", "B*07:02", "B*27:05", "B*57:01")
-  missing <- setdiff(must_have, data$allele_2field)
+  missing <- setdiff(must_have, data$allele)
   if (length(missing) > 0) {
     errors <- c(errors, paste("Missing expected alleles:", paste(missing, collapse = ", ")))
   }
 
   # Spot-check known assignments
-  b4402 <- data %>% filter(allele_2field == "B*44:02") %>% pull(kir_ligand)
+  b4402 <- data %>% filter(allele == "B*44:02") %>% pull(kir_ligand)
   if (length(b4402) > 0 && b4402 != "Bw4 - 80T") {
     errors <- c(errors, sprintf("B*44:02 should be Bw4-80T, got: %s", b4402))
   }
 
-  b5701 <- data %>% filter(allele_2field == "B*57:01") %>% pull(kir_ligand)
+  b5701 <- data %>% filter(allele == "B*57:01") %>% pull(kir_ligand)
   if (length(b5701) > 0 && b5701 != "Bw4 - 80I") {
     errors <- c(errors, sprintf("B*57:01 should be Bw4-80I, got: %s", b5701))
   }
@@ -101,18 +101,18 @@ validate_bw4_80i <- function() {
   }
 
   # Spot-check: B*57:01 must be Bw4-80I, B*44:02 must be Bw4-80T
-  b5701 <- data %>% filter(allele_2field == "B*57:01")
+  b5701 <- data %>% filter(allele == "B*57:01")
   if (nrow(b5701) > 0 && b5701$kir_ligand != "Bw4 - 80I") {
     errors <- c(errors, sprintf("B*57:01 should be Bw4-80I, got: %s", b5701$kir_ligand))
   }
 
-  b4402 <- data %>% filter(allele_2field == "B*44:02")
+  b4402 <- data %>% filter(allele == "B*44:02")
   if (nrow(b4402) > 0 && b4402$kir_ligand != "Bw4 - 80T") {
     errors <- c(errors, sprintf("B*44:02 should be Bw4-80T, got: %s", b4402$kir_ligand))
   }
 
   # A*32:01 must be Bw4-80I
-  a3201 <- data %>% filter(allele_2field == "A*32:01")
+  a3201 <- data %>% filter(allele == "A*32:01")
   if (nrow(a3201) > 0 && a3201$kir_ligand != "Bw4 - 80I") {
     errors <- c(errors, sprintf("A*32:01 should be Bw4-80I, got: %s", a3201$kir_ligand))
   }
@@ -121,7 +121,7 @@ validate_bw4_80i <- function() {
   # sequence, and their presence is what let a frameshifted read ("EPAEPAR")
   # be classified as Bw4-80E, and what made B*15:01 and B*15:01N collapse to
   # two different categories at two-field resolution.
-  nulls <- data$allele_2field[str_detect(data$allele_2field, "N$")]
+  nulls <- data$allele[str_detect(data$allele, "N$")]
   if (length(nulls) > 0) {
     errors <- c(errors, sprintf("%d null allele(s) present; they are excluded by design (e.g. %s)",
                                 length(nulls), nulls[1]))
@@ -160,7 +160,7 @@ validate_bw4_80i <- function() {
   # failure that blocked downstream consumers from using this table at all.
   for (lc in c("A", "B")) {
     sub <- data %>% filter(locus == lc)
-    key <- str_remove(str_remove(sub$allele_2field, "[NQLS]$"), paste0("^", lc, "\\*"))
+    key <- str_remove(str_remove(sub$allele, "[NQLS]$"), paste0("^", lc, "\\*"))
     conflicting <- unique(key[duplicated(
       unique(data.frame(key = key, v = sub$kir_ligand_code))$key)])
     if (length(conflicting) > 0) {
@@ -183,12 +183,12 @@ validate_c1_c2 <- function() {
   if (nrow(data) == 0) return(errors)
 
   # Spot-check
-  c0501 <- data %>% filter(allele_2field == "C*05:01") %>% pull(kir_ligand)
+  c0501 <- data %>% filter(allele == "C*05:01") %>% pull(kir_ligand)
   if (length(c0501) > 0 && c0501 != "C2") {
     errors <- c(errors, sprintf("C*05:01 should be C2, got: %s", c0501))
   }
 
-  c0702 <- data %>% filter(allele_2field == "C*07:02") %>% pull(kir_ligand)
+  c0702 <- data %>% filter(allele == "C*07:02") %>% pull(kir_ligand)
   if (length(c0702) > 0 && c0702 != "C1") {
     errors <- c(errors, sprintf("C*07:02 should be C1, got: %s", c0702))
   }

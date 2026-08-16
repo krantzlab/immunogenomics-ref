@@ -20,8 +20,20 @@ Row count 7,953 → 7,505. Column order: `allele_2field, locus, kir_ligand, kir_
 
 **What it unblocks:** at two-field resolution `B*15:01` and `B*15:01N` previously collapsed to one key carrying two categories, which made this table unusable by packages that truncate to two fields — `bridgie` raised a hard error on it and could register only three of the four managed classifications. Verified: zero conflicting keys at either locus, for both `kir_ligand` and `kir_ligand_code`.
 
+### Schema conventions across the managed tables
+
+**`allele` is now the uniform key.** Every managed table is keyed on `allele`; previously `b_leader_assignments.csv` used that name while the other three used `allele_2field`, so a consumer had to hardcode a different key per table.
+
+**`allele_2field` is retained as an exact duplicate, not renamed away.** The v2.0.0 data change already requires consumers to re-vendor; making them chase a column rename in the same release couples two unrelated things. It is deprecated and will be removed in v3.0.0. The loader asserts the two columns never drift.
+
+**`kir_ligand_code` added to `bw4_bw6_classification.csv` and `c1_c2_classification.csv`**, matching `bw4_80i_classification.csv`. `kir_ligand` keeps its display form (`Bw4 - 80I`); the code is the identifier (`Bw4_80I`, `Bw6`, `C1`, `C2`) and is validated against `^[A-Za-z0-9_]+$`. `b_leader_assignments.csv` needs no code column — `M`/`T` are already syntax-safe.
+
+Column counts: `bw4_bw6` and `c1_c2` 6 → 8, `bw4_80i` 11 → 12. No row counts change and no existing value is altered.
+
 ### Infrastructure
 
+- `managed/fetch_kir_ligand.R` — emits `allele` and `kir_ligand_code` for both outputs. The code is computed after cross-validation, since that step can rewrite `kir_ligand` for sequence-corrected alleles and the code must follow the corrected value.
+- `R/load_reference_data.R` — new shared `.check_key_and_code()` applied to all three tables; the `get_*()` extractors and the validators now read the canonical `allele` column, so they survive the v3.0.0 removal of the alias.
 - `managed/derive_bw4_80i.R` — excludes null alleles at both loci, emits the new columns, and joins `bw4_bw6_classification.csv` for `api_kir_ligand`. A refresh reproduces the shipped schema.
 - `R/validate_reference_data.R` — `validate_bw4_80i()` now checks that no null allele reappears, that every row has a readable position 80, that the retired values (`unclassified`, `Bw4 - 80D`, `Bw4 - 80E`) stay retired, that `kir_ligand` and `kir_ligand_code` agree one-to-one, that `classification_status` matches `kir_ligand`, and that no two-field key maps to more than one category at either locus. All verified against injected failures.
 - `R/load_reference_data.R` — `load_bw4_80i_classification()` requires the new columns and validates their domains; documents the per-locus coverage semantics.

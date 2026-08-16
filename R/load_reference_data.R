@@ -45,6 +45,37 @@ library(here)
   file.path(.refdata_root(), "datasets", filename)
 }
 
+#' Assert the uniform key and the identifier column are well formed
+#'
+#' `allele` is the canonical key across every managed table. `allele_2field` is
+#' retained as an exact duplicate for consumers written against the old name
+#' and is deprecated for removal in v3.0.0 -- so the two must never drift.
+#'
+#' `kir_ligand_code` is what downstream code builds feature names from, so a
+#' space or a hyphen slipping into it is a downstream break rather than a
+#' cosmetic problem.
+#'
+#' @param data A loaded managed table.
+#' @param context Table name, used in error messages.
+#' @param code_col Name of the identifier column, or NULL to skip that check.
+#' @return `data`, invisibly; stops on failure.
+.check_key_and_code <- function(data, context, code_col = "kir_ligand_code") {
+  if (all(c("allele", "allele_2field") %in% names(data)) &&
+      !identical(data$allele, data$allele_2field)) {
+    n <- sum(data$allele != data$allele_2field)
+    stop(sprintf("[%s] allele and its deprecated alias allele_2field disagree on %d row(s)",
+                 context, n), call. = FALSE)
+  }
+  if (!is.null(code_col) && code_col %in% names(data)) {
+    bad <- unique(data[[code_col]][!str_detect(data[[code_col]], "^[A-Za-z0-9_]+$")])
+    if (length(bad) > 0) {
+      stop(sprintf("[%s] %s must be syntax-safe, got: %s", context, code_col,
+                   paste(bad, collapse = ", ")), call. = FALSE)
+    }
+  }
+  invisible(data)
+}
+
 .load_csv <- function(filename, required_cols, context) {
   path <- .refdata_path(filename)
   if (!file.exists(path)) {
@@ -65,10 +96,15 @@ library(here)
 # ============================================================
 
 #' Load Bw4/Bw6 classification for HLA-B alleles
-#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date
+#'
+#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
+#' consumers written against the old name and removed in v3.0.0.
+#'
+#' @return tibble: allele, allele_2field, kir_ligand, kir_ligand_code,
+#'   n_alleles_collapsed, source, ipd_version, fetch_date
 load_bw4_classification <- function() {
   data <- .load_csv("bw4_bw6_classification.csv",
-                     c("allele_2field", "kir_ligand"),
+                     c("allele", "allele_2field", "kir_ligand", "kir_ligand_code"),
                      "bw4_classification")
   valid <- c("Bw4 - 80I", "Bw4 - 80T", "Bw4 - 80N", "Bw6")
   bad <- setdiff(unique(data$kir_ligand), valid)
@@ -76,7 +112,8 @@ load_bw4_classification <- function() {
     stop(sprintf("[bw4_classification] Unexpected kir_ligand values: %s", paste(bad, collapse = ", ")),
          call. = FALSE)
   }
-  stopifnot("All alleles must start with B*" = all(str_starts(data$allele_2field, "B\\*")))
+  stopifnot("All alleles must start with B*" = all(str_starts(data$allele, "B\\*")))
+  .check_key_and_code(data, "bw4_classification")
   data
 }
 
@@ -93,13 +130,16 @@ load_bw4_classification <- function() {
 #' listed -- so an HLA-A allele's absence means "not Bw4" and is informative,
 #' while an HLA-B allele's absence means the snapshot predates it.
 #'
-#' @return tibble: allele_2field, locus, kir_ligand, kir_ligand_code,
+#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
+#' consumers written against the old name and removed in v3.0.0.
+#'
+#' @return tibble: allele, allele_2field, locus, kir_ligand, kir_ligand_code,
 #'   classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source,
 #'   ipd_version, fetch_date
 load_bw4_80i_classification <- function() {
   data <- .load_csv("bw4_80i_classification.csv",
-                     c("allele_2field", "locus", "kir_ligand", "kir_ligand_code",
-                       "classification_status", "pos80"),
+                     c("allele", "allele_2field", "locus", "kir_ligand",
+                       "kir_ligand_code", "classification_status", "pos80"),
                      "bw4_80i_classification")
   stopifnot("locus must be A or B" = all(data$locus %in% c("A", "B")))
 
@@ -110,27 +150,27 @@ load_bw4_80i_classification <- function() {
                  paste(bad_status, collapse = ", ")), call. = FALSE)
   }
 
-  # The identifier column is what downstream code builds feature names from, so
-  # a space or punctuation slipping in is a downstream break, not a cosmetic one.
-  bad_code <- unique(data$kir_ligand_code[!str_detect(data$kir_ligand_code, "^[A-Za-z0-9_]+$")])
-  if (length(bad_code) > 0) {
-    stop(sprintf("[bw4_80i_classification] kir_ligand_code must be syntax-safe, got: %s",
-                 paste(bad_code, collapse = ", ")), call. = FALSE)
-  }
+  .check_key_and_code(data, "bw4_80i_classification")
   data
 }
 
 #' Load C1/C2 classification for HLA-C alleles
-#' @return tibble: allele_2field, kir_ligand, n_alleles_collapsed, source, ipd_version, fetch_date
+#'
+#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
+#' consumers written against the old name and removed in v3.0.0.
+#'
+#' @return tibble: allele, allele_2field, kir_ligand, kir_ligand_code,
+#'   n_alleles_collapsed, source, ipd_version, fetch_date
 load_c1_c2_classification <- function() {
   data <- .load_csv("c1_c2_classification.csv",
-                     c("allele_2field", "kir_ligand"),
+                     c("allele", "allele_2field", "kir_ligand", "kir_ligand_code"),
                      "c1_c2_classification")
   bad <- setdiff(unique(data$kir_ligand), c("C1", "C2"))
   if (length(bad) > 0) {
     stop(sprintf("[c1_c2_classification] Unexpected kir_ligand values: %s", paste(bad, collapse = ", ")),
          call. = FALSE)
   }
+  .check_key_and_code(data, "c1_c2_classification")
   data
 }
 
@@ -313,7 +353,7 @@ get_bw4_80i_alleles <- function() {
   data <- load_bw4_80i_classification()
   data %>%
     filter(locus == "B", kir_ligand == "Bw4 - 80I") %>%
-    pull(allele_2field)
+    pull(allele)
 }
 
 #' Get HLA-B Bw4-80T alleles (replaces BW4_80T_ALLELES constant)
@@ -322,7 +362,7 @@ get_bw4_80t_alleles <- function() {
   data <- load_bw4_80i_classification()
   data %>%
     filter(locus == "B", kir_ligand == "Bw4 - 80T") %>%
-    pull(allele_2field)
+    pull(allele)
 }
 
 #' Get HLA-A Bw4-80I alleles (replaces HLA_A_BW4_80I_ALLELES constant)
@@ -331,7 +371,7 @@ get_hla_a_bw4_alleles <- function() {
   data <- load_bw4_80i_classification()
   data %>%
     filter(locus == "A", kir_ligand == "Bw4 - 80I") %>%
-    pull(allele_2field)
+    pull(allele)
 }
 
 # --- C1/C2 vectors ---
@@ -342,14 +382,14 @@ get_hla_a_bw4_alleles <- function() {
 #' @return character vector of 2-field HLA-C alleles with C1
 get_c1_alleles <- function() {
   data <- load_c1_c2_classification()
-  data %>% filter(kir_ligand == "C1") %>% pull(allele_2field)
+  data %>% filter(kir_ligand == "C1") %>% pull(allele)
 }
 
 #' Get HLA-C C2 alleles (replaces C2_ALLELES constant)
 #' @return character vector of 2-field HLA-C alleles with C2
 get_c2_alleles <- function() {
   data <- load_c1_c2_classification()
-  data %>% filter(kir_ligand == "C2") %>% pull(allele_2field)
+  data %>% filter(kir_ligand == "C2") %>% pull(allele)
 }
 
 # --- KIR3DL1 expression vectors ---

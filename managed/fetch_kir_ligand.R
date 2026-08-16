@@ -192,6 +192,26 @@ hla_c_api$ipd_version <- ipd_version_out
 hla_b_api$fetch_date <- fetch_date
 hla_c_api$fetch_date <- fetch_date
 
+# `allele` is the uniform key across every managed table. `allele_2field` is
+# kept as an exact duplicate for consumers written against the old name; it is
+# deprecated and will be removed in v3.0.0.
+#
+# kir_ligand_code is the identifier form of kir_ligand -- no spaces or
+# punctuation, so it is safe in a feature id, column name or model matrix.
+# Computed here rather than in collapse_to_2field() because the cross-
+# validation above can rewrite kir_ligand for sequence-corrected alleles, and
+# the code must follow the corrected value.
+add_key_and_code <- function(d) {
+  d$allele <- d$allele_2field
+  d$kir_ligand_code <- ifelse(
+    grepl("^Bw4 - ", d$kir_ligand), sub("Bw4 - ", "Bw4_", d$kir_ligand), d$kir_ligand)
+  front <- c("allele", "allele_2field", "kir_ligand", "kir_ligand_code")
+  d[, c(front, setdiff(names(d), front))]
+}
+
+hla_b_api <- add_key_and_code(hla_b_api)
+hla_c_api <- add_key_and_code(hla_c_api)
+
 bw4_output <- here("datasets", "bw4_bw6_classification.csv")
 c1c2_output <- here("datasets", "c1_c2_classification.csv")
 

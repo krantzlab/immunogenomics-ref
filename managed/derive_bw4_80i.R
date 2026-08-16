@@ -227,6 +227,12 @@ if (file.exists(api_path)) {
   bw4_combined <- bw4_combined %>% relocate(api_kir_ligand, .after = bw4_motif_77_83)
 }
 
+# `allele` is the uniform key across every managed table; `allele_2field` is
+# kept as an exact duplicate for consumers written against the old name, and is
+# deprecated for removal in v3.0.0.
+bw4_combined$allele <- bw4_combined$allele_2field
+bw4_combined <- bw4_combined %>% relocate(allele, .before = allele_2field)
+
 output_path <- here("datasets", "bw4_80i_classification.csv")
 write_csv(bw4_combined, output_path)
 
