@@ -112,7 +112,7 @@ hla_b_classified <- B_aa %>%
     bw4_motif = paste0(pos77, pos78, pos79, pos80, pos81, pos82, pos83)
   ) %>%
   transmute(
-    allele_2field = trimmed_allele,
+    allele = trimmed_allele,
     locus = "B",
     kir_ligand,
     kir_ligand_code,
@@ -160,7 +160,7 @@ if (!is.null(A_align)) {
       classification_status = "classified"
     ) %>%
     transmute(
-      allele_2field = trimmed_allele,
+      allele = trimmed_allele,
       locus = "A",
       kir_ligand,
       kir_ligand_code,
@@ -176,7 +176,7 @@ if (!is.null(A_align)) {
   if (nrow(hla_a_classified) > 0) {
     cat("  HLA-A Bw4 alleles:\n")
     hla_a_classified %>%
-      select(allele_2field, kir_ligand, pos80) %>%
+      select(allele, kir_ligand, pos80) %>%
       as.data.frame() %>%
       print(row.names = FALSE)
   }
@@ -195,7 +195,7 @@ if (!is.null(A_align)) {
 # 4. Combine and save
 # ============================================================
 bw4_combined <- bind_rows(hla_b_classified, hla_a_classified) %>%
-  arrange(locus, allele_2field)
+  arrange(locus, allele)
 
 # ------------------------------------------------------------
 # 4a. Carry the API's own call alongside the sequence-derived one
@@ -212,9 +212,9 @@ bw4_combined <- bind_rows(hla_b_classified, hla_a_classified) %>%
 api_path <- here("datasets", "bw4_bw6_classification.csv")
 if (file.exists(api_path)) {
   api_calls <- read_csv(api_path, show_col_types = FALSE) %>%
-    select(allele_2field, api_kir_ligand = kir_ligand)
+    select(allele, api_kir_ligand = kir_ligand)
   bw4_combined <- bw4_combined %>%
-    left_join(api_calls, by = "allele_2field") %>%
+    left_join(api_calls, by = "allele") %>%
     relocate(api_kir_ligand, .after = bw4_motif_77_83)
 
   n_dis <- sum(!is.na(bw4_combined$api_kir_ligand) &
@@ -248,7 +248,7 @@ old_80i <- c("B*27:02", "B*27:05", "B*38:01", "B*44:02", "B*44:03",
              "B*53:01", "B*57:01", "B*57:03", "B*58:01", "B*58:02", "B*59:01")
 
 for (a in old_80i) {
-  row <- bw4_combined %>% filter(allele_2field == a)
+  row <- bw4_combined %>% filter(allele == a)
   if (nrow(row) > 0) {
     new_class <- row$kir_ligand[1]
     status <- ifelse(new_class == "Bw4 - 80I", "OK", sprintf("CHANGED → %s", new_class))

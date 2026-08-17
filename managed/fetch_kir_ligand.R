@@ -62,16 +62,16 @@ collapse_to_2field <- function(raw_data, locus_letter) {
   pattern <- sprintf("%s\\*\\d+:\\d+", locus_letter)
   raw_data %>%
     filter(!is.na(matching.kir_ligand)) %>%
-    mutate(allele_2field = str_extract(name, pattern)) %>%
-    filter(!is.na(allele_2field)) %>%
-    group_by(allele_2field) %>%
+    mutate(allele = str_extract(name, pattern)) %>%
+    filter(!is.na(allele)) %>%
+    group_by(allele) %>%
     summarise(
       kir_ligand = names(sort(table(matching.kir_ligand), decreasing = TRUE))[1],
       n_alleles_collapsed = n(),
       .groups = "drop"
     ) %>%
     mutate(source = "IPD_API") %>%
-    arrange(allele_2field)
+    arrange(allele)
 }
 
 # Fetch HLA-B
@@ -116,12 +116,12 @@ if (!is.null(B_align)) {
         pos83 == "R" & pos80 == "T" ~ "Bw4 - 80T",
         pos83 == "R" ~ paste0("Bw4 - 80", pos80)  # rare variants
       ),
-      allele_2field = trimmed_allele
+      allele = trimmed_allele
     )
 
   # Cross-validate API vs sequence
   cross_val <- hla_b_api %>%
-    inner_join(b_seq %>% select(allele_2field, kir_ligand_seq), by = "allele_2field") %>%
+    inner_join(b_seq %>% select(allele, kir_ligand_seq), by = "allele") %>%
     mutate(match = kir_ligand == kir_ligand_seq)
 
   n_match <- sum(cross_val$match)
@@ -133,14 +133,14 @@ if (!is.null(B_align)) {
     cat("  Mismatches (sequence is authoritative):\n")
     cross_val %>%
       filter(!match) %>%
-      select(allele_2field, api = kir_ligand, sequence = kir_ligand_seq) %>%
+      select(allele, api = kir_ligand, sequence = kir_ligand_seq) %>%
       head(20) %>%
       as.data.frame() %>%
       print(row.names = FALSE)
 
     # Use sequence-derived classification where there's a mismatch
     hla_b_api <- hla_b_api %>%
-      left_join(b_seq %>% select(allele_2field, kir_ligand_seq), by = "allele_2field") %>%
+      left_join(b_seq %>% select(allele, kir_ligand_seq), by = "allele") %>%
       mutate(
         kir_ligand = ifelse(!is.na(kir_ligand_seq), kir_ligand_seq, kir_ligand),
         source = ifelse(!is.na(kir_ligand_seq) & kir_ligand != kir_ligand_seq,
@@ -159,11 +159,11 @@ if (!is.null(B_align)) {
       filter(!duplicated(trimmed_allele), pos80 %in% c("N", "K")) %>%
       mutate(
         kir_ligand_seq = ifelse(pos80 == "N", "C1", "C2"),
-        allele_2field = trimmed_allele
+        allele = trimmed_allele
       )
 
     cross_val_c <- hla_c_api %>%
-      inner_join(c_seq %>% select(allele_2field, kir_ligand_seq), by = "allele_2field") %>%
+      inner_join(c_seq %>% select(allele, kir_ligand_seq), by = "allele") %>%
       mutate(match = kir_ligand == kir_ligand_seq)
 
     cat(sprintf("  HLA-C cross-validation: %d match, %d mismatch out of %d\n",
@@ -191,6 +191,24 @@ hla_c_api$ipd_version <- ipd_version_out
 
 hla_b_api$fetch_date <- fetch_date
 hla_c_api$fetch_date <- fetch_date
+
+# `allele` is the uniform key across every managed table, and the only one:
+# the former `allele_2field` was removed in v2.0.0.
+#
+# kir_ligand_code is the identifier form of kir_ligand -- no spaces or
+# punctuation, so it is safe in a feature id, column name or model matrix.
+# Computed here rather than in collapse_to_2field() because the cross-
+# validation above can rewrite kir_ligand for sequence-corrected alleles, and
+# the code must follow the corrected value.
+add_code <- function(d) {
+  d$kir_ligand_code <- ifelse(
+    grepl("^Bw4 - ", d$kir_ligand), sub("Bw4 - ", "Bw4_", d$kir_ligand), d$kir_ligand)
+  front <- c("allele", "kir_ligand", "kir_ligand_code")
+  d[, c(front, setdiff(names(d), front))]
+}
+
+hla_b_api <- add_code(hla_b_api)
+hla_c_api <- add_code(hla_c_api)
 
 bw4_output <- here("datasets", "bw4_bw6_classification.csv")
 c1c2_output <- here("datasets", "c1_c2_classification.csv")

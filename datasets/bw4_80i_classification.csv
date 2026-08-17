@@ -1,4 +1,4 @@
-allele_2field,locus,kir_ligand,kir_ligand_code,classification_status,pos80,bw4_motif_77_83,api_kir_ligand,source,ipd_version,fetch_date
+allele,locus,kir_ligand,kir_ligand_code,classification_status,pos80,bw4_motif_77_83,api_kir_ligand,source,ipd_version,fetch_date
 A*01:289,A,Bw4 - 80I,Bw4_80I,classified,I,NA,NA,HLAtools_protein_alignment,IPD-IMGT/HLA 3.63.0,2026-02-19 18:49:27.965744
 A*01:298,A,Bw4 - 80I,Bw4_80I,classified,I,NA,NA,HLAtools_protein_alignment,IPD-IMGT/HLA 3.63.0,2026-02-19 18:49:27.965744
 A*01:95,A,Bw4 - 80I,Bw4_80I,classified,I,NA,NA,HLAtools_protein_alignment,IPD-IMGT/HLA 3.63.0,2026-02-19 18:49:27.965744
