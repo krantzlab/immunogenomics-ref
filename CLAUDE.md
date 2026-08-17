@@ -87,7 +87,7 @@ or, in an R session that already has the dependencies:
 source("R/validate_reference_data.R")
 validate_all()
 ```
-All 13 checks must pass before committing. Prefer the pixi task: `validate_all()`
+All 14 checks must pass before committing. Prefer the pixi task: `validate_all()`
 returns its result invisibly, so calling it from a shell always exits 0 —
 `tools/validate.R` is the wrapper that turns a failure into a non-zero status.
 CI runs that same script on every push, PR and tag
@@ -101,11 +101,19 @@ reaching a tag that downstream consumers pin.
 4. Add entry to `provenance.yaml`
 5. Add `get_*()` backward-compatible extractors if needed
 6. Copy CSV to `datasets/`
-7. Update `CHANGELOG.md`
+7. Add an entry to `datasets/manifest.yaml` — the `manifest` check fails on any
+   undeclared file in `datasets/`, so this is not optional
+8. Update `CHANGELOG.md`
 
 ### Modifying managed scripts
 - Always preserve the dual-source cross-validation pattern (API + protein alignment)
 - Log the IPD-IMGT/HLA version and fetch date in every output
+
+### After any data change
+Update `datasets/manifest.yaml`. Row counts, sha256 digests, column lists, key
+uniqueness and declared value domains are all checked against the actual files,
+so a stale manifest fails `pixi run validate` and CI. Get the new digest from
+the failure message — it prints the actual value in full.
 
 ## R dependencies
 

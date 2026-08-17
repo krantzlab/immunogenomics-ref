@@ -32,11 +32,26 @@ Row count 7,953 → 7,505. Column order: `allele, locus, kir_ligand, kir_ligand_
 
 Column counts: `bw4_bw6` and `c1_c2` 6 → 7, `bw4_80i` unchanged at 11. No row counts change and no existing value is altered.
 
+### New: `datasets/manifest.yaml`
+
+A machine-readable inventory of `datasets/`, aimed at consumers that vendor a pinned snapshot — which is how these files are meant to be used.
+
+**It declares what absence means.** This is the part that is not recoverable from the data and was previously only in prose, if anywhere. Each dataset carries a `coverage.kind`: `complete_for_universe` (a missing key means the snapshot predates it — *not* a negative finding), `selective` (a missing key genuinely means "not in this category"), or `enumerated` (a missing key means no published evidence). `bw4_80i_classification.csv` is `complete_for_universe` for HLA-B and `selective` for HLA-A in the same file, which is exactly the kind of thing a consumer cannot infer and will otherwise guess wrong.
+
+**It records two caveats that were previously discoverable only by measuring.** `b_leader_assignments.csv` covers 3,961 of 6,350 HLA-B keys against the API universe (62.4%) and 4,078 of 6,465 against the alignment universe (63.1%) — complete against neither, so any downstream claim of full HLA-B leader coverage is false. And the 24 `Non-canonical` rows in `bw4_80i_classification.csv` are *exactly* the 24 rows where the IPD API disagrees; the category and the contested set are the same set (issue #7).
+
+**It also declares** the key column and whether it is unique, row counts, a sha256 of the file bytes so a vendored copy can be verified with `shasum -a 256`, the full column list in order, and the value domain of each classification column.
+
+`provenance.yaml` remains authoritative for *why* data is classified as it is; the manifest states *what is in `datasets/` right now*, as facts a program can check.
+
 ### Infrastructure
 
 - `managed/fetch_kir_ligand.R` — emits `allele` and `kir_ligand_code` for both outputs. The code is computed after cross-validation, since that step can rewrite `kir_ligand` for sequence-corrected alleles and the code must follow the corrected value. `allele` is also the internal working column name throughout, so no vestige of the old name remains to be re-emitted by a later edit; the same applies to `managed/derive_bw4_80i.R` and `managed/fetch_b_leader.R`.
 - `R/load_reference_data.R` — new shared `.check_key_and_code()` applied to all three tables. It rejects a file that still carries `allele_2field`, and rejects a `kir_ligand_code` that is not syntax-safe. The `get_*()` extractors and the validators read `allele`.
 - `managed/derive_bw4_80i.R` — excludes null alleles at both loci, emits the new columns, and joins `bw4_bw6_classification.csv` for `api_kir_ligand`. A refresh reproduces the shipped schema.
+- `R/validate_reference_data.R` — new `validate_manifest()`, the 14th check. Every mechanical claim in the manifest is verified against the actual files: existence, sha256, row count, exact column list and order, declared key present and unique where claimed, declared value domains hold, and `excludes_null_alleles` where asserted. It also fails on any CSV in `datasets/` that the manifest does not declare, so a new file cannot land invisibly. The prose fields (`absence_means`, `caveats`) cannot be checked mechanically and stay the author's responsibility — the point of checking everything else is that a data change cannot land while quietly contradicting them. Verified against six injected faults.
+- `pixi.toml` — adds `r-yaml` and `r-digest` to the default environment, used only by `validate_manifest()`. Dev-side: the manifest is YAML any parser can read and the data it describes stays plain CSV requiring nothing.
+- `.github/workflows/validate.yml` — installs the same two packages. CI installs its dependency list by hand rather than from `pixi.toml`, so the two can drift; when they did, the symptom was `FAIL: manifest` in CI while the check passed locally, which reads like a data problem rather than a missing package. The lists now carry a comment pointing at each other.
 - `R/validate_reference_data.R` — `validate_bw4_80i()` now checks that no null allele reappears, that every row has a readable position 80, that the retired values (`unclassified`, `Bw4 - 80D`, `Bw4 - 80E`) stay retired, that `kir_ligand` and `kir_ligand_code` agree one-to-one, that `classification_status` matches `kir_ligand`, and that no two-field key maps to more than one category at either locus. All verified against injected failures.
 - `R/load_reference_data.R` — `load_bw4_80i_classification()` requires the new columns and validates their domains; documents the per-locus coverage semantics.
 - `provenance.yaml` — records the position-83 rule, the null-allele exclusion and its rationale, per-locus coverage, and the value domain of each classification column.

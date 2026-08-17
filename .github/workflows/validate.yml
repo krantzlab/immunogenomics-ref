@@ -75,12 +75,17 @@ jobs:
           use-public-rspm: true
 
       # Explicit install rather than setup-r-dependencies: this repo has no
-      # DESCRIPTION, and RSPM serves Linux binaries so the four packages
-      # install in well under a minute.
+      # DESCRIPTION, and RSPM serves Linux binaries so these install in well
+      # under a minute.
+      #
+      # Keep this list in step with the core feature in pixi.toml. It is the
+      # same dependency set by hand, so the two can drift -- and when they do,
+      # the symptom is a check that silently cannot run here while passing
+      # locally. yaml and digest are needed by validate_manifest().
       - name: Install R dependencies
         shell: Rscript {0}
         run: |
-          install.packages(c("readr", "dplyr", "stringr", "here"))
+          install.packages(c("readr", "dplyr", "stringr", "here", "yaml", "digest"))
 
       # Same entry point as `pixi run validate`, so local and CI cannot drift.
       # here::here() anchors on the .git directory created by checkout, so
