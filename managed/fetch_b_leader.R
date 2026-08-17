@@ -51,10 +51,9 @@ B_aa <- B_align$B$AA
 b_leader <- B_aa %>%
   select(allele, trimmed_allele, pos_neg21 = `-21`) %>%
   filter(pos_neg21 %in% c("M", "T")) %>%
-  mutate(allele_2field = trimmed_allele) %>%
-  filter(!duplicated(allele_2field)) %>%
+  filter(!duplicated(trimmed_allele)) %>%
   transmute(
-    allele = allele_2field,
+    allele = trimmed_allele,
     b_leader = pos_neg21,
     source = "HLAtools_protein_alignment",
     ipd_version = ipd_version,
@@ -106,14 +105,14 @@ api_raw <- tryCatch(fetch_api_leaders(), error = function(e) {
 if (nrow(api_raw) > 0) {
   api_leaders <- api_raw %>%
     filter(matching.b_leader %in% c("M", "T")) %>%
-    mutate(allele_2field = str_extract(name, "B\\*\\d+:\\d+")) %>%
-    filter(!is.na(allele_2field)) %>%
-    group_by(allele_2field) %>%
+    mutate(allele = str_extract(name, "B\\*\\d+:\\d+")) %>%
+    filter(!is.na(allele)) %>%
+    group_by(allele) %>%
     summarise(api_leader = names(sort(table(matching.b_leader), decreasing = TRUE))[1],
               .groups = "drop")
 
   cross_val <- b_leader %>%
-    inner_join(api_leaders, by = c("allele" = "allele_2field")) %>%
+    inner_join(api_leaders, by = "allele") %>%
     mutate(match = b_leader == api_leader)
 
   cat(sprintf("  Cross-validation: %d match, %d mismatch out of %d\n",

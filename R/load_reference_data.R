@@ -47,9 +47,10 @@ library(here)
 
 #' Assert the uniform key and the identifier column are well formed
 #'
-#' `allele` is the canonical key across every managed table. `allele_2field` is
-#' retained as an exact duplicate for consumers written against the old name
-#' and is deprecated for removal in v3.0.0 -- so the two must never drift.
+#' `allele` is the only key across every managed table. The former
+#' `allele_2field` was removed in v2.0.0; a file still carrying it is a stale
+#' snapshot rather than a supported input, so say so plainly instead of
+#' silently reading the column that happens to be there.
 #'
 #' `kir_ligand_code` is what downstream code builds feature names from, so a
 #' space or a hyphen slipping into it is a downstream break rather than a
@@ -60,11 +61,10 @@ library(here)
 #' @param code_col Name of the identifier column, or NULL to skip that check.
 #' @return `data`, invisibly; stops on failure.
 .check_key_and_code <- function(data, context, code_col = "kir_ligand_code") {
-  if (all(c("allele", "allele_2field") %in% names(data)) &&
-      !identical(data$allele, data$allele_2field)) {
-    n <- sum(data$allele != data$allele_2field)
-    stop(sprintf("[%s] allele and its deprecated alias allele_2field disagree on %d row(s)",
-                 context, n), call. = FALSE)
+  if ("allele_2field" %in% names(data)) {
+    stop(sprintf(paste0("[%s] allele_2field was removed in v2.0.0 but is present -- ",
+                        "this file predates the release. Re-vendor from a v2.0.0 tag ",
+                        "or re-run the managed/ script."), context), call. = FALSE)
   }
   if (!is.null(code_col) && code_col %in% names(data)) {
     bad <- unique(data[[code_col]][!str_detect(data[[code_col]], "^[A-Za-z0-9_]+$")])
@@ -97,14 +97,13 @@ library(here)
 
 #' Load Bw4/Bw6 classification for HLA-B alleles
 #'
-#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
-#' consumers written against the old name and removed in v3.0.0.
+#' Keyed on `allele`. The former `allele_2field` was removed in v2.0.0.
 #'
-#' @return tibble: allele, allele_2field, kir_ligand, kir_ligand_code,
+#' @return tibble: allele, kir_ligand, kir_ligand_code,
 #'   n_alleles_collapsed, source, ipd_version, fetch_date
 load_bw4_classification <- function() {
   data <- .load_csv("bw4_bw6_classification.csv",
-                     c("allele", "allele_2field", "kir_ligand", "kir_ligand_code"),
+                     c("allele", "kir_ligand", "kir_ligand_code"),
                      "bw4_classification")
   valid <- c("Bw4 - 80I", "Bw4 - 80T", "Bw4 - 80N", "Bw6")
   bad <- setdiff(unique(data$kir_ligand), valid)
@@ -130,15 +129,14 @@ load_bw4_classification <- function() {
 #' listed -- so an HLA-A allele's absence means "not Bw4" and is informative,
 #' while an HLA-B allele's absence means the snapshot predates it.
 #'
-#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
-#' consumers written against the old name and removed in v3.0.0.
+#' Keyed on `allele`. The former `allele_2field` was removed in v2.0.0.
 #'
-#' @return tibble: allele, allele_2field, locus, kir_ligand, kir_ligand_code,
+#' @return tibble: allele, locus, kir_ligand, kir_ligand_code,
 #'   classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source,
 #'   ipd_version, fetch_date
 load_bw4_80i_classification <- function() {
   data <- .load_csv("bw4_80i_classification.csv",
-                     c("allele", "allele_2field", "locus", "kir_ligand",
+                     c("allele", "locus", "kir_ligand",
                        "kir_ligand_code", "classification_status", "pos80"),
                      "bw4_80i_classification")
   stopifnot("locus must be A or B" = all(data$locus %in% c("A", "B")))
@@ -156,14 +154,13 @@ load_bw4_80i_classification <- function() {
 
 #' Load C1/C2 classification for HLA-C alleles
 #'
-#' Keyed on `allele`; `allele_2field` is a deprecated duplicate retained for
-#' consumers written against the old name and removed in v3.0.0.
+#' Keyed on `allele`. The former `allele_2field` was removed in v2.0.0.
 #'
-#' @return tibble: allele, allele_2field, kir_ligand, kir_ligand_code,
+#' @return tibble: allele, kir_ligand, kir_ligand_code,
 #'   n_alleles_collapsed, source, ipd_version, fetch_date
 load_c1_c2_classification <- function() {
   data <- .load_csv("c1_c2_classification.csv",
-                     c("allele", "allele_2field", "kir_ligand", "kir_ligand_code"),
+                     c("allele", "kir_ligand", "kir_ligand_code"),
                      "c1_c2_classification")
   bad <- setdiff(unique(data$kir_ligand), c("C1", "C2"))
   if (length(bad) > 0) {

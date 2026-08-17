@@ -19,7 +19,7 @@ bw4_bw6_classification:
   api_field: matching.kir_ligand
   derivation_script: managed/fetch_kir_ligand.R
   output_file: datasets/bw4_bw6_classification.csv
-  columns: "allele, allele_2field, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date"
+  columns: "allele, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date"
   resolution: "2-field (collapsed from full-resolution API data)"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"
@@ -40,7 +40,7 @@ c1_c2_classification:
   api_field: matching.kir_ligand
   derivation_script: managed/fetch_kir_ligand.R
   output_file: datasets/c1_c2_classification.csv
-  columns: "allele, allele_2field, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date"
+  columns: "allele, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date"
   resolution: "2-field"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"
@@ -88,7 +88,7 @@ bw4_80i_classification:
   upstream_database: "IPD-IMGT/HLA via HLAtools protein alignment"
   derivation_script: managed/derive_bw4_80i.R
   output_file: datasets/bw4_80i_classification.csv
-  columns: "allele, allele_2field, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date"
+  columns: "allele, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date"
   resolution: "2-field"
   last_fetched: "2026-02-19"
   ipd_version: "3.63.0"

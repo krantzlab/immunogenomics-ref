@@ -14,26 +14,28 @@
 
 **New `api_kir_ligand`.** Records the IPD Allele Query API's own call alongside the sequence-derived one. At 3.63.0 they disagree on 24 expressed alleles (API Bw4/Bw6 vs sequence Non-canonical). Which source is authoritative is an open scientific question, deliberately unresolved; recording both makes the disagreement countable instead of a silent editorial choice.
 
-Row count 7,953 → 7,505. Column order: `allele_2field, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date`.
+Row count 7,953 → 7,505. Column order: `allele, locus, kir_ligand, kir_ligand_code, classification_status, pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date`.
 
 **Why this is breaking:** the value domain of `kir_ligand` changed and rows were removed. Consumers that hardcode the category list, or that look up null alleles, will behave differently. Existing filters on `"Bw4 - 80I"` / `"Bw4 - 80T"` / `"Bw6"` are unaffected, as are all `get_*()` extractors.
 
 **What it unblocks:** at two-field resolution `B*15:01` and `B*15:01N` previously collapsed to one key carrying two categories, which made this table unusable by packages that truncate to two fields — `bridgie` raised a hard error on it and could register only three of the four managed classifications. Verified: zero conflicting keys at either locus, for both `kir_ligand` and `kir_ligand_code`.
 
-### Schema conventions across the managed tables
+### BREAKING: `allele_2field` renamed to `allele` across the managed tables
 
-**`allele` is now the uniform key.** Every managed table is keyed on `allele`; previously `b_leader_assignments.csv` used that name while the other three used `allele_2field`, so a consumer had to hardcode a different key per table.
+**`allele` is the uniform key, and the only one.** Every managed table is now keyed on `allele`; previously `b_leader_assignments.csv` used that name while `bw4_bw6_classification.csv`, `c1_c2_classification.csv` and `bw4_80i_classification.csv` used `allele_2field`, so a consumer had to hardcode a different key per table. `allele_2field` is gone — renamed outright, not retained as a deprecated alias.
 
-**`allele_2field` is retained as an exact duplicate, not renamed away.** The v2.0.0 data change already requires consumers to re-vendor; making them chase a column rename in the same release couples two unrelated things. It is deprecated and will be removed in v3.0.0. The loader asserts the two columns never drift.
+**Why a clean break rather than a deprecation period.** v2.0.0 is the only release in which this rename is free. The `bw4_80i` change above already forces every consumer to re-vendor and re-verify a pinned snapshot; carrying a duplicate column to v3.0.0 would make them do that work twice, for a column that exists only to postpone a one-line change. The loader now rejects a file that still contains `allele_2field` with an explicit message, so a stale vendored snapshot fails loudly at load rather than being read through a silent fallback.
+
+**Migration.** Rename the key in your read path: `allele_2field` → `allele`. Nothing else about the column changed — same values, same order, same row set. In `bw4_bw6` and `c1_c2` the rename is the only difference from v1.2.0 apart from the added `kir_ligand_code`; verified by reconstruction, removing `kir_ligand_code` and renaming `allele` back reproduces the v1.2.0 files byte-for-byte.
 
 **`kir_ligand_code` added to `bw4_bw6_classification.csv` and `c1_c2_classification.csv`**, matching `bw4_80i_classification.csv`. `kir_ligand` keeps its display form (`Bw4 - 80I`); the code is the identifier (`Bw4_80I`, `Bw6`, `C1`, `C2`) and is validated against `^[A-Za-z0-9_]+$`. `b_leader_assignments.csv` needs no code column — `M`/`T` are already syntax-safe.
 
-Column counts: `bw4_bw6` and `c1_c2` 6 → 8, `bw4_80i` 11 → 12. No row counts change and no existing value is altered.
+Column counts: `bw4_bw6` and `c1_c2` 6 → 7, `bw4_80i` unchanged at 11. No row counts change and no existing value is altered.
 
 ### Infrastructure
 
-- `managed/fetch_kir_ligand.R` — emits `allele` and `kir_ligand_code` for both outputs. The code is computed after cross-validation, since that step can rewrite `kir_ligand` for sequence-corrected alleles and the code must follow the corrected value.
-- `R/load_reference_data.R` — new shared `.check_key_and_code()` applied to all three tables; the `get_*()` extractors and the validators now read the canonical `allele` column, so they survive the v3.0.0 removal of the alias.
+- `managed/fetch_kir_ligand.R` — emits `allele` and `kir_ligand_code` for both outputs. The code is computed after cross-validation, since that step can rewrite `kir_ligand` for sequence-corrected alleles and the code must follow the corrected value. `allele` is also the internal working column name throughout, so no vestige of the old name remains to be re-emitted by a later edit; the same applies to `managed/derive_bw4_80i.R` and `managed/fetch_b_leader.R`.
+- `R/load_reference_data.R` — new shared `.check_key_and_code()` applied to all three tables. It rejects a file that still carries `allele_2field`, and rejects a `kir_ligand_code` that is not syntax-safe. The `get_*()` extractors and the validators read `allele`.
 - `managed/derive_bw4_80i.R` — excludes null alleles at both loci, emits the new columns, and joins `bw4_bw6_classification.csv` for `api_kir_ligand`. A refresh reproduces the shipped schema.
 - `R/validate_reference_data.R` — `validate_bw4_80i()` now checks that no null allele reappears, that every row has a readable position 80, that the retired values (`unclassified`, `Bw4 - 80D`, `Bw4 - 80E`) stay retired, that `kir_ligand` and `kir_ligand_code` agree one-to-one, that `classification_status` matches `kir_ligand`, and that no two-field key maps to more than one category at either locus. All verified against injected failures.
 - `R/load_reference_data.R` — `load_bw4_80i_classification()` requires the new columns and validates their domains; documents the per-locus coverage semantics.
