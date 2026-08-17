@@ -87,6 +87,7 @@ validate_all()
 #   PASS: hla_c_expression
 #   PASS: hla_divergence
 #   PASS: backward_compat
+#   PASS: manifest
 #   All reference data checks passed.
 ```
 
@@ -95,6 +96,7 @@ validate_all()
 ```
 immunogenomics-ref/
 ├── datasets/          # ← Downstream projects read ONLY from here
+│   └── manifest.yaml  #    Machine-readable inventory: keys, coverage, checksums
 ├── managed/           # R scripts: IPD-IMGT/HLA API → datasets/
 ├── curated/           # Literature CSVs with provenance → copy to datasets/
 ├── R/                 # Loader + validation functions
@@ -107,6 +109,33 @@ immunogenomics-ref/
 **Curated data** is manually maintained from published literature. Every entry includes `confidence_tier` (A–D), `source_doi`, `source_detail`, and `evidence_note` for full traceability.
 
 See `provenance.yaml` for the complete registry of sources, analytical decisions, and their rationale.
+
+### `datasets/manifest.yaml`
+
+If you vendor a pinned copy of these files, read this first. It declares, per
+dataset, the key column, the row count, a sha256 of the file bytes, the column
+list, the value domain of each classification column, and — the part that is
+not recoverable from the data itself — **what a missing key means**:
+
+| `coverage.kind` | A key absent from the file means |
+|---|---|
+| `complete_for_universe` | Not in the snapshot. **Not** a negative finding. |
+| `selective` | Not in this category. A usable negative. |
+| `enumerated` | No published evidence. **Not** a negative finding. |
+
+The distinction matters. `bw4_80i_classification.csv` is `complete_for_universe`
+for HLA-B but `selective` for HLA-A, so a missing `B*` allele means the snapshot
+predates it while a missing `A*` allele genuinely means "not Bw4". Treating the
+first like the second invents negatives.
+
+Two current caveats are recorded there rather than left to be discovered:
+`b_leader_assignments.csv` covers roughly 62% of HLA-B (any claim of complete
+leader coverage is false), and the 24 `Non-canonical` rows in
+`bw4_80i_classification.csv` are exactly the 24 where IPD's own call disagrees.
+
+Every mechanical field is verified against the actual files by the `manifest`
+check in `pixi run validate`, so a manifest that has drifted fails CI rather
+than misinforming you. Verify a vendored copy with `shasum -a 256 <file>`.
 
 ## Updating
 
@@ -141,7 +170,7 @@ can actually be *run*, with the interpreter and package versions pinned by
 
 ```bash
 pixi install          # default environment: R 4.5 + readr, dplyr, stringr, here
-pixi run validate     # all 13 checks; exits non-zero on failure
+pixi run validate     # all 14 checks; exits non-zero on failure
 pixi run console      # interactive R with the loaders available
 ```
 

@@ -67,9 +67,11 @@ Use conventional commits:
 
 ## Pull request checklist
 
-- [ ] `pixi run validate` passes (13/13 checks)
+- [ ] `pixi run validate` passes (14/14 checks)
 - [ ] New curated data includes all provenance columns
 - [ ] `provenance.yaml` updated for any data changes
+- [ ] `datasets/manifest.yaml` updated for any data change — row counts, sha256
+      and column lists are checked, so a stale manifest fails the build
 - [ ] `CHANGELOG.md` updated
 - [ ] DOIs are valid and resolve correctly
 - [ ] No study-specific data included (this repo is study-agnostic)

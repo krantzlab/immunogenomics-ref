@@ -27,6 +27,12 @@ r-readr = "*"
 r-dplyr = "*"
 r-stringr = "*"
 r-here = "*"
+# For validate_manifest() only: reading datasets/manifest.yaml and digesting
+# the files it declares. Dev-side, like everything else here -- the manifest is
+# YAML a consumer may read with any parser, and the data it describes stays
+# plain CSV that needs nothing.
+r-yaml = "*"
+r-digest = "*"
 
 # Additional dependencies for the managed/ track, which queries the IPD-IMGT/HLA
 # Allele Query API and reads HLAtools protein alignments.

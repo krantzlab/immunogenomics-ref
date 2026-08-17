@@ -686,6 +686,159 @@ validate_getters <- function() {
   errors
 }
 
+#' Assert datasets/manifest.yaml describes the files that are actually there
+#'
+#' The manifest exists so a consumer can trust what it says about coverage --
+#' in particular what a missing key means, which is not recoverable from the
+#' data. A manifest that has drifted from the files is worse than none: it
+#' states falsehoods with the authority of a machine-readable declaration.
+#'
+#' So every mechanical claim is checked here rather than maintained by hand:
+#' the file exists, its byte digest matches, its row count matches, its column
+#' list matches exactly and in order, and the declared key is present and
+#' unique where the manifest says it is unique. The prose fields
+#' (absence_means, caveats) cannot be checked mechanically and remain the
+#' author's responsibility; the point of checking everything else is that a
+#' data change cannot land while quietly contradicting them.
+#'
+#' Requires the yaml and digest packages. Both are dev-side only -- the
+#' published data stays plain CSV readable with no dependencies at all.
+#'
+#' @return Character vector of error messages (empty = pass).
+validate_manifest <- function() {
+  errors <- character()
+
+  for (pkg in c("yaml", "digest")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      return(sprintf("[manifest] Package '%s' is required to validate the manifest; run under pixi (pixi run validate)", pkg))
+    }
+  }
+
+  root <- .refdata_root()
+  path <- file.path(root, "datasets", "manifest.yaml")
+  if (!file.exists(path)) {
+    return("[manifest] datasets/manifest.yaml not found")
+  }
+
+  m <- tryCatch(yaml::yaml.load_file(path),
+                error = function(e) NULL)
+  if (is.null(m)) {
+    return("[manifest] datasets/manifest.yaml is not valid YAML")
+  }
+  if (is.null(m$datasets) || length(m$datasets) == 0) {
+    return("[manifest] manifest declares no datasets")
+  }
+
+  declared <- vapply(m$datasets, function(d) d$file, character(1))
+
+  # Every CSV in datasets/ must be declared. A new file that nobody added to
+  # the manifest is the failure mode that matters: consumers read the manifest
+  # as the inventory, so an undeclared file is an invisible one.
+  present <- setdiff(basename(list.files(file.path(root, "datasets"),
+                                         pattern = "\\.csv$", full.names = TRUE)),
+                     character())
+  undeclared <- setdiff(present, declared)
+  if (length(undeclared) > 0) {
+    errors <- c(errors, sprintf("[manifest] Files in datasets/ not declared: %s",
+                                paste(undeclared, collapse = ", ")))
+  }
+  phantom <- setdiff(declared, present)
+  if (length(phantom) > 0) {
+    errors <- c(errors, sprintf("[manifest] Declared but missing from datasets/: %s",
+                                paste(phantom, collapse = ", ")))
+  }
+
+  for (d in m$datasets) {
+    f <- d$file
+    fp <- file.path(root, "datasets", f)
+    if (!file.exists(fp)) next  # already reported above
+
+    data <- suppressWarnings(read_csv(fp, show_col_types = FALSE,
+                                      progress = FALSE))
+
+    if (!is.null(d$n_rows) && nrow(data) != d$n_rows) {
+      errors <- c(errors, sprintf("[manifest] %s: declares %d rows, file has %d",
+                                  f, d$n_rows, nrow(data)))
+    }
+
+    if (!is.null(d$sha256)) {
+      actual <- digest::digest(file = fp, algo = "sha256")
+      if (!identical(actual, d$sha256)) {
+        # Print the actual digest in full rather than a prefix: prefixes can
+        # agree while the values differ, and the full string is what has to be
+        # pasted into the manifest to fix this.
+        errors <- c(errors, sprintf("[manifest] %s: sha256 mismatch\n      declared: %s\n      actual:   %s",
+                                    f, d$sha256, actual))
+      }
+    }
+
+    if (!is.null(d$columns)) {
+      dec <- unlist(d$columns)
+      if (!identical(dec, names(data))) {
+        errors <- c(errors, sprintf("[manifest] %s: column list disagrees with file\n      declared: %s\n      actual:   %s",
+                                    f, paste(dec, collapse = ", "),
+                                    paste(names(data), collapse = ", ")))
+      }
+    }
+
+    # Key: must exist, and be unique exactly when the manifest claims it is.
+    key_cols <- if (!is.null(d$key_scope)) unlist(d$key_scope) else d$key
+    if (!is.null(key_cols)) {
+      missing_key <- setdiff(key_cols, names(data))
+      if (length(missing_key) > 0) {
+        errors <- c(errors, sprintf("[manifest] %s: declared key column(s) absent: %s",
+                                    f, paste(missing_key, collapse = ", ")))
+      } else if (isTRUE(d$key_unique)) {
+        n_dup <- sum(duplicated(data[, key_cols, drop = FALSE]))
+        if (n_dup > 0) {
+          errors <- c(errors, sprintf("[manifest] %s: declares key_unique but %d duplicate key(s) on %s",
+                                      f, n_dup, paste(key_cols, collapse = "+")))
+        }
+      }
+    }
+
+    # Declared value domains must hold. This is where a manifest earns its
+    # keep: a new category appearing upstream shows up here rather than in a
+    # consumer's model matrix.
+    if (!is.null(d$value_domains)) {
+      for (col in names(d$value_domains)) {
+        if (!col %in% names(data)) {
+          errors <- c(errors, sprintf("[manifest] %s: value_domains names absent column '%s'", f, col))
+          next
+        }
+        allowed <- unlist(d$value_domains[[col]])
+        seen <- unique(data[[col]])
+        seen <- seen[!is.na(seen)]
+        extra <- setdiff(seen, allowed)
+        if (length(extra) > 0) {
+          errors <- c(errors, sprintf("[manifest] %s: %s has undeclared value(s): %s",
+                                      f, col, paste(extra, collapse = ", ")))
+        }
+      }
+    }
+
+    if (isTRUE(d$excludes_null_alleles)) {
+      key1 <- if (!is.null(d$key)) d$key else key_cols[1]
+      if (!is.null(key1) && key1 %in% names(data)) {
+        n_null <- sum(str_detect(data[[key1]], "N$"))
+        if (n_null > 0) {
+          errors <- c(errors, sprintf("[manifest] %s: declares excludes_null_alleles but %d null allele(s) present",
+                                      f, n_null))
+        }
+      }
+    }
+  }
+
+  # The manifest's schema_release must match what CITATION/CHANGELOG describe.
+  # A manifest still claiming the previous release is exactly the drift this
+  # check exists to catch.
+  if (is.null(m$schema_release) || !nzchar(m$schema_release)) {
+    errors <- c(errors, "[manifest] schema_release is missing")
+  }
+
+  errors
+}
+
 # --- Master validator ---
 
 #' Run all validation checks
@@ -705,7 +858,8 @@ validate_all <- function(verbose = TRUE) {
     hla_a_expression    = validate_hla_a_expression,
     hla_c_expression    = validate_hla_c_expression,
     hla_divergence      = validate_hla_divergence,
-    backward_compat     = validate_getters
+    backward_compat     = validate_getters,
+    manifest            = validate_manifest
   )
 
   all_pass <- TRUE

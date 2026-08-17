@@ -1,0 +1,296 @@
+# manifest.yaml -- machine-readable inventory of datasets/
+#
+# Purpose. A consumer that vendors a pinned snapshot of these files (which is
+# how they are meant to be used) needs three things this repository previously
+# only stated in prose, if at all:
+#
+#   1. What each file is keyed on, so a join does not have to guess.
+#   2. What a *missing* key means. This differs per table and is not
+#      recoverable from the data: for some tables absence means "not in this
+#      category", for others it means "the snapshot predates this allele".
+#      Reading the second as the first silently invents negatives.
+#   3. Whether the vendored copy is intact and which release it came from.
+#
+# `provenance.yaml` records where data came from and why it is classified the
+# way it is -- the scientific record, written for a human. This file records
+# what is in datasets/ right now, as facts a program can check. They overlap
+# deliberately; provenance.yaml stays authoritative for rationale.
+#
+# Every mechanical field below (n_rows, sha256, columns, key uniqueness) is
+# verified against the actual files by validate_manifest() in
+# R/validate_reference_data.R, which runs in CI. A stale manifest fails the
+# build rather than misleading a consumer.
+#
+# sha256 is over the file bytes as committed (LF line endings, no trailing
+# newline beyond the final record). Verify a vendored copy with:
+#   shasum -a 256 <file>
+
+manifest_version: 1
+schema_release: "2.0.0"           # release whose schema this describes
+ipd_version: "IPD-IMGT/HLA 3.63.0"
+generated_for: "v2.0.0"
+
+# ------------------------------------------------------------------
+# Coverage vocabulary -- the meaning of `coverage.kind` below.
+# ------------------------------------------------------------------
+# complete_for_universe
+#   Every member of the stated universe has a row. A key absent from the file
+#   is absent from the universe too: the snapshot predates it, or it is not
+#   the right kind of allele. Absence is NOT a classification.
+#
+# selective
+#   The file lists only members of a particular category. Absence IS
+#   informative and means "not in this category" -- a usable negative.
+#
+# enumerated
+#   The file is a closed hand-curated list. It covers exactly what literature
+#   supports and nothing else. Absence means "no published evidence", not
+#   "negative".
+coverage_kinds: [complete_for_universe, selective, enumerated]
+
+# ==================================================================
+# Track 1: managed (database-derived)
+# ==================================================================
+datasets:
+
+  - file: bw4_bw6_classification.csv
+    track: managed
+    description: "HLA-B Bw4/Bw6 KIR ligand classification"
+    key: allele
+    key_unique: true
+    resolution: 2-field
+    n_rows: 6350
+    sha256: "122c57e30b9fc11c1c7628125337b61ff0a497187af200c22e47e609ab37b28d"
+    columns: [allele, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date]
+    value_domains:
+      kir_ligand: ["Bw4 - 80I", "Bw4 - 80T", "Bw4 - 80N", "Bw6"]
+      kir_ligand_code: [Bw4_80I, Bw4_80T, Bw4_80N, Bw6]
+    coverage:
+      kind: complete_for_universe
+      universe: "expressed 2-field HLA-B alleles known to the IPD Allele Query API at 3.63.0"
+      n_universe: 6350
+      absence_means: "not in the API snapshot -- NOT 'no Bw4/Bw6 assignment'"
+    provenance_key: bw4_bw6_classification
+
+  - file: c1_c2_classification.csv
+    track: managed
+    description: "HLA-C C1/C2 KIR ligand classification"
+    key: allele
+    key_unique: true
+    resolution: 2-field
+    n_rows: 4978
+    sha256: "38f8bd2471ea8d8cb8c4b8211081b2bbf08abb2658bc61380f13f1f94beae94e"
+    columns: [allele, kir_ligand, kir_ligand_code, n_alleles_collapsed, source, ipd_version, fetch_date]
+    value_domains:
+      kir_ligand: [C1, C2]
+      kir_ligand_code: [C1, C2]
+    coverage:
+      kind: complete_for_universe
+      universe: "expressed 2-field HLA-C alleles known to the IPD Allele Query API at 3.63.0"
+      n_universe: 4978
+      absence_means: "not in the API snapshot -- NOT 'neither C1 nor C2'"
+    provenance_key: c1_c2_classification
+
+  - file: bw4_80i_classification.csv
+    track: managed
+    description: "Combined Bw4 position-80 classification (HLA-B + HLA-A)"
+    key: allele
+    # Globally unique despite the two loci: the locus prefix is part of the
+    # allele name, so A* and B* keys cannot collide. Verified, not assumed.
+    key_unique: true
+    resolution: 2-field
+    n_rows: 7505
+    sha256: "48ea6cb4705b0d7528be3634bda0f87a24345e4b6c27b8f8845fbad3bdce8112"
+    columns: [allele, locus, kir_ligand, kir_ligand_code, classification_status,
+              pos80, bw4_motif_77_83, api_kir_ligand, source, ipd_version, fetch_date]
+    value_domains:
+      locus: [A, B]
+      classification_status: [classified, non_canonical_83]
+    excludes_null_alleles: true
+    # Coverage differs by locus. This is the single most misreadable thing in
+    # datasets/ and the reason this file exists.
+    coverage:
+      kind: per_locus
+      by_locus:
+        B:
+          kind: complete_for_universe
+          universe: "expressed 2-field HLA-B alleles in the HLAtools protein alignment at 3.63.0"
+          n_rows: 6465
+          absence_means: "not in the alignment snapshot -- NOT 'not Bw4'"
+        A:
+          kind: selective
+          universe: "HLA-A alleles carrying Bw4 (position 83 R, plus the three known functional KIR3DL1 ligands)"
+          n_rows: 1040
+          absence_means: "not Bw4 -- this IS a usable negative"
+    caveats:
+      - "api_kir_ligand disagrees with kir_ligand on 24 HLA-B alleles, which are
+         exactly the 24 rows classified Non-canonical. Unresolved by design; see
+         issue #7. Do not treat Non-canonical as settled biology."
+      - "api_kir_ligand is NA for all HLA-A rows: the API table covers HLA-B only."
+    provenance_key: bw4_80i_classification
+
+  - file: b_leader_assignments.csv
+    track: managed
+    description: "HLA-B -21 leader peptide M/T dimorphism"
+    key: allele
+    key_unique: true
+    resolution: 2-field
+    n_rows: 4353
+    sha256: "439e10f584af3e5c799b856fc8dbaaa2386ceb640a35dcd2abbd00cd570d00f7"
+    columns: [allele, b_leader, source, ipd_version, fetch_date]
+    value_domains:
+      b_leader: [M, T]
+    # NOT complete. A consumer assuming otherwise silently drops two fifths of
+    # HLA-B. The table lists only alleles whose position -21 is readable as M or
+    # T in the alignment; everything else is absent, and absence carries no
+    # information about the leader.
+    coverage:
+      kind: selective
+      universe: "2-field HLA-B alleles with a readable M or T at position -21"
+      absence_means: "position -21 not readable as M or T in the alignment -- NOT a leader assignment"
+      measured_against:
+        - denominator: "bw4_bw6_classification.csv keys (API universe, n=6350)"
+          covered: 3961
+          pct: 62.4
+        - denominator: "bw4_80i_classification.csv HLA-B keys (alignment universe, n=6465)"
+          covered: 4078
+          pct: 63.1
+      note: "Complete against no available denominator. Any downstream claim of
+             full HLA-B leader coverage is false."
+    excludes_null_alleles: false
+    caveats:
+      - "Retains 275 null alleles (keys ending in N), unlike every other managed
+         table, which excluded them in v2.0.0. A null allele produces no protein
+         and therefore has no leader peptide to present, so these rows are the
+         same category error the v2.0.0 bw4_80i rework removed elsewhere. They
+         are also exactly the 275 keys that fall outside both the API and the
+         alignment universes. Tracked separately; do not assume consistency with
+         bw4_80i_classification.csv on this point."
+    provenance_key: b_leader_assignments
+
+# ==================================================================
+# Track 2: curated (literature-derived)
+# ==================================================================
+# All curated tables are `enumerated`: they hold what published evidence
+# supports. Absence means no evidence, never a negative finding. Each row
+# carries confidence_tier (A/B/C/D) and a source DOI.
+
+  - file: kir3dl1_expression.csv
+    track: curated
+    description: "KIR3DL1 allele surface expression class"
+    key: allele
+    key_unique: true
+    n_rows: 17
+    sha256: "5ac9de272709d95ff60513eed951235d6c2f0f655ffa3a56f63df3b8795879ac"
+    columns: [allele, expression_class, confidence_tier, source_doi, source_detail, evidence_note]
+    coverage:
+      kind: enumerated
+      absence_means: "no published expression measurement for this allele"
+    provenance_key: kir3dl1_expression
+
+  - file: kir3dl1_hla_binding.csv
+    track: curated
+    description: "KIR3DL1 x HLA binding strength (MFI)"
+    key_scope: [kir3dl1_allele, hla_allele]
+    key_unique: true
+    n_rows: 323
+    sha256: "234305475610afc42e1323dae1a5d650fecfdceddee398bbeaf315adad876c3a"
+    columns: [kir3dl1_allele, hla_allele, mfi_mean, confidence_tier, source_doi, source_detail]
+    coverage:
+      kind: enumerated
+      absence_means: "pair not assayed in the source study -- NOT 'does not bind'"
+    provenance_key: kir3dl1_hla_binding
+
+  - file: erap1_allotype_activity.csv
+    track: curated
+    description: "ERAP1 allotype trimming activity class"
+    key: allotype
+    key_unique: true
+    n_rows: 10
+    sha256: "e15e28f059e74c37621bf474f7927ff557e4f19dadcefaaa9b37bdd9d7db3e4e"
+    columns: [allotype, activity_class, rs3734016_pos56_ancG_derA, rs26653_pos127_ancC_derG,
+              rs26618_pos276_ancA_derG, rs27895_pos346_ancG_derA, rs2287987_pos349_ancA_derG,
+              rs30187_pos528_ancA_derG, rs10050860_pos575_ancG_derA, rs17482078_pos725_ancG_derA,
+              rs27044_pos730_ancC_derG, freq_ALL, freq_EUR, freq_AFR, freq_EAS, freq_SAS,
+              freq_AMR, confidence_tier, source_doi, evidence_note]
+    coverage:
+      kind: enumerated
+      universe: "the 10 named ERAP1 allotypes"
+      absence_means: "haplotype not one of the 10 characterised allotypes"
+    provenance_key: erap1_allotype_activity
+
+  - file: erap2_haplotype_expression.csv
+    track: curated
+    description: "ERAP2 haplotype expression status"
+    key: haplotype
+    key_unique: true
+    n_rows: 3
+    sha256: "14ea30fe959dab8368f967689812c3263ff688ee9bd3f4bf26cc56624b2b2c93"
+    columns: [haplotype, tag_snp_rs2248374, expression_status, expression_level,
+              functional_consequence, population_freq_approx, confidence_tier,
+              source_doi, source_detail, evidence_note]
+    coverage:
+      kind: enumerated
+      absence_means: "not one of the characterised ERAP2 haplotypes"
+    provenance_key: erap2_haplotype_expression
+
+  - file: erap_snp_crosswalk.csv
+    track: curated
+    description: "ERAP GRCh38 VCF-allele to amino-acid mapping"
+    key: rsid
+    key_unique: true
+    n_rows: 11
+    sha256: "f833c34d34626c820b2c4a5f06d7119d0a59a4c77308f8967af59a7dd088a474"
+    columns: [gene, rsid, aa_position, aa_ancestral, aa_derived, grch38_chrom, grch38_pos,
+              ref_allele, alt_allele, ref_aa, alt_aa, coding_strand, dbsnp_build,
+              ensembl_release, confidence_tier, source, evidence_note]
+    coverage:
+      kind: enumerated
+      universe: "the ERAP1/ERAP2 SNPs used by the allotype and haplotype tables"
+      absence_means: "SNP not used by this repository's ERAP tables"
+    provenance_key: erap_snp_crosswalk
+
+  - file: hla_a_estimated_expression.csv
+    track: curated
+    description: "HLA-A lineage estimated expression"
+    key: hla_a_lineage
+    key_unique: true
+    resolution: lineage
+    n_rows: 21
+    sha256: "180c8614d3904e89feca8b95914065f9591489f8af2a8b9fc837c44834d43cef"
+    columns: [hla_a_lineage, expression_z_score, expression_class, confidence_tier,
+              source_doi, source_detail, evidence_note]
+    coverage:
+      kind: enumerated
+      absence_means: "no expression estimate for this lineage"
+    caveats:
+      - "Keyed on lineage (e.g. A*01), not a 2-field allele. Do not join directly
+         to the managed tables without truncating first."
+    provenance_key: hla_a_estimated_expression
+
+  - file: hla_c_expression.csv
+    track: curated
+    description: "HLA-C allotype expression (MFI and z-score)"
+    key: hla_c_allotype
+    key_unique: true
+    n_rows: 14
+    sha256: "cad7b8e7a64ec5dab9f8709b1b705f1ec7f8f45eb09b6c49ae2897ef35938995"
+    columns: [hla_c_allotype, expression_mfi, expression_z_score, expression_class,
+              confidence_tier, source_doi, source_detail, evidence_note]
+    coverage:
+      kind: enumerated
+      absence_means: "no published expression measurement for this allotype"
+    provenance_key: hla_c_expression
+
+  - file: hla_functional_divergence.csv
+    track: curated
+    description: "Pairwise HLA functional divergence scores"
+    key_scope: [locus, allele_1, allele_2]
+    key_unique: true
+    n_rows: 3002
+    sha256: "fcbd9fb332db63e17fc7f9d5f6d12369547648ec0af73b454aafd254bc31a953"
+    columns: [allele_1, allele_2, locus, fd_score, confidence_tier, source_doi]
+    coverage:
+      kind: enumerated
+      absence_means: "pair not scored -- NOT 'zero divergence'"
+    provenance_key: hla_functional_divergence
